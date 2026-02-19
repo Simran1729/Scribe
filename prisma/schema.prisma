@@ -5,8 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -14,14 +13,65 @@ datasource db {
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  name      String
+  password  String
+  role      Role      @relation(fields: [roleId], references: [id])
+  roleId    Int
+  isActive  Boolean
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  profile   Profile?
+  blogs     Blog[]
+  comments  Comment[]
+  like      Like[]
 }
 
-model Todo {
-  id          Int     @id @default(autoincrement())
-  title       String
-  description String?
-  done        Boolean @default(false)
+model Role {
+  id   Int    @id @default(autoincrement())
+  name String
+  user User[]
+}
+
+model Profile {
+  id         Int     @id @default(autoincrement())
+  userId     Int     @unique
+  user       User    @relation(fields: [userId], references: [id])
+  interests  String?
+  about      String?
+  occupation String?
+}
+
+model Blog {
+  id           Int       @id @default(autoincrement())
+  userId       Int       @unique
+  user         User      @relation(fields: [userId], references: [id])
+  title        String
+  plainText    String
+  enrichedText Json
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  isDeleted    Boolean
+  isBlocked    Boolean
+  comments     Comment[]
+}
+
+model Comment {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id])
+  blogId    Int
+  blog      Blog      @relation(fields: [blogId], references: [id])
+  parentId  Int?
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Like {
+  userId   Int  @unique
+  user     User @relation(fields: [userId], references: [id])
+  targetId Int
 }
