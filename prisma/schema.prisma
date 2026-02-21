@@ -12,66 +12,149 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id        Int       @id @default(autoincrement())
-  email     String    @unique
-  name      String
-  password  String
-  role      Role      @relation(fields: [roleId], references: [id])
-  roleId    Int
-  isActive  Boolean
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  profile   Profile?
-  blogs     Blog[]
-  comments  Comment[]
-  like      Like[]
+enum Role {
+  ADMIN
+  MODERATOR
+  USER
 }
 
-model Role {
-  id   Int    @id @default(autoincrement())
-  name String
-  user User[]
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model User {
+  id        Int     @id @default(autoincrement())
+  email     String  @unique
+  name      String
+  password  String
+  isActive  Boolean @default(true)
+  isBlocked Boolean @default(false)
+
+  role Role @default(USER)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile      Profile?
+  blogs        Blog[]
+  comments     Comment[]
+  blogLikes    BlogLike[]
+  commentLikes CommentLike[]
+  followers    Follow[]      @relation("UserAsFollowing")
+  following    Follow[]      @relation("UserAsFollower")
 }
 
 model Profile {
   id         Int     @id @default(autoincrement())
   userId     Int     @unique
-  user       User    @relation(fields: [userId], references: [id])
   interests  String?
   about      String?
   occupation String?
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Blog {
-  id           Int       @id @default(autoincrement())
-  userId       Int       @unique
-  user         User      @relation(fields: [userId], references: [id])
+  id           Int        @id @default(autoincrement())
+  slug         String
+  userId       Int
   title        String
   plainText    String
   enrichedText Json
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  isDeleted    Boolean
-  isBlocked    Boolean
-  comments     Comment[]
+  status       BlogStatus @default(DRAFT)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  isDeleted    Boolean    @default(false)
+  isBlocked    Boolean    @default(false)
+
+  deletedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+
+  comments Comment[]
+  likes    BlogLike[]
+  postTags PostTags[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Comment {
-  id        Int       @id @default(autoincrement())
-  userId    Int
-  user      User      @relation(fields: [userId], references: [id])
-  blogId    Int
-  blog      Blog      @relation(fields: [blogId], references: [id])
-  parentId  Int?
-  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
-  replies   Comment[] @relation("CommentReplies")
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id     Int @id @default(autoincrement())
+  userId Int
+  blogId Int
+
+  blog Blog @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parentId Int?
+
+  parent  Comment?      @relation("CommentReplies", fields: [parentId], references: [id])
+  replies Comment[]     @relation("CommentReplies")
+  likes   CommentLike[]
+
+  @@index([userId])
+  @@index([blogId])
+  @@index([parentId])
 }
 
-model Like {
-  userId   Int  @unique
-  user     User @relation(fields: [userId], references: [id])
-  targetId Int
+model BlogLike {
+  userId Int
+  blogId Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blog Blog @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([userId, blogId])
+}
+
+model CommentLike {
+  userId    Int
+  commentId Int
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([userId, commentId])
+}
+
+model Tag {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  postTags  PostTags[]
+}
+
+model PostTags {
+  blogId Int
+  tagId  Int
+
+  blog Blog @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([blogId, tagId])
+}
+
+model Follow {
+  followerId  Int
+  followingId Int
+
+  //The user who iniiated the follow
+  follower  User @relation("UserAsFollower", fields: [followerId], references: [id])
+  //The user being followed
+  following User @relation("UserAsFollowing", fields: [followingId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@id([followerId, followingId])
+  @@index([followingId])
 }
