@@ -43,6 +43,16 @@ model User {
   commentLikes CommentLike[]
   followers    Follow[]      @relation("UserAsFollowing")
   following    Follow[]      @relation("UserAsFollower")
+  tokens       Token[]
+}
+
+model Token {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  User      User     @relation(fields: [userId], references: [id])
+  token     String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
 }
 
 model Profile {
