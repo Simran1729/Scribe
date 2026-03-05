@@ -8,3 +8,9 @@ export const HTTP_STATUS = {
   CONFLICT: 409,
   INTERNAL_SERVER_ERROR: 500,
 } as const;
+
+export const USER_ROLES = {
+  USER : 'USER',
+  MODERATOR : 'MODERATOR',
+  ADMIN : 'ADMIN'
+} as const;

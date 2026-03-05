@@ -4,9 +4,9 @@ import { prismaErrorHandler } from "../utils/prismaErrorHandler";
 import { ApiError } from "../utils/ApiError";
 import { sendResponse } from "../utils/sendResponse";
 
-export const errorMiddleware  = (res : Response, req : Request, next : NextFunction, err : unknown) => {
+export const errorMiddleware  = ( err : unknown, res : Response, req : Request, next : NextFunction) => {
     let error = zodErrorHandler(err);
-    prismaErrorHandler(error);
+    error = prismaErrorHandler(error);
 
     if(error instanceof ApiError){
         return sendResponse(res, error.statusCode, {
