@@ -24,12 +24,13 @@ enum BlogStatus {
 }
 
 model User {
-  id        Int     @id @default(autoincrement())
-  email     String  @unique
-  name      String
-  password  String
-  isActive  Boolean @default(true)
-  isBlocked Boolean @default(false)
+  id              Int     @id @default(autoincrement())
+  email           String  @unique
+  name            String
+  password        String
+  isActive        Boolean @default(true)
+  isBlocked       Boolean @default(false)
+  isEmailVerified Boolean @default(false)
 
   role Role @default(USER)
 
@@ -44,6 +45,7 @@ model User {
   followers    Follow[]      @relation("UserAsFollowing")
   following    Follow[]      @relation("UserAsFollower")
   tokens       Token[]
+  emailOTPs    EmailOTP[]
 }
 
 model Token {
@@ -167,4 +169,15 @@ model Follow {
 
   @@id([followerId, followingId])
   @@index([followingId])
+}
+
+model EmailOTP {
+  id        Int      @id @default(autoincrement())
+  otp       String
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([userId])
 }
