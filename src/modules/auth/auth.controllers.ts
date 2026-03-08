@@ -2,19 +2,26 @@ import { Request, Response } from "express";
 import { signUpSchema } from "./auth.schema";
 import { authService } from "./auth.services";
 import { sendResponse } from "../../utils/sendResponse";
-import { HTTP_STATUS } from "../../constants/httpStatus";
-
+import { HTTP_STATUS, TOKEN_EXPIRY } from "../../constants/httpStatus";
+import { addDays } from "date-fns";
 
 export const authController = {
     signUp : async (req : Request, res : Response) => {
         const parsedBody = signUpSchema.parse(req.body);
 
-        const user = await authService.createUser(parsedBody);
+        const {user, accessToken, refreshToken} = await authService.createUser(parsedBody);
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly : true,
+            sameSite : "lax",
+            secure : false,
+            expires : addDays(new Date(), TOKEN_EXPIRY.REFRESH_TOKEN_DAYS)
+        })
 
         sendResponse(res, HTTP_STATUS.CREATED, {
             status : true,
             message : "User Created Successfully",
-            data : user
+            data : {user, accessToken}
         })
     }
 }

@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import jwt, {SignOptions, Secret} from "jsonwebtoken";
 import { JWT_KEY } from "../config/env";
 import {z} from "zod";
-import { USER_ROLES } from "../constants/httpStatus";
+import { TOKEN_EXPIRY, USER_ROLES } from "../constants/httpStatus";
 import otpGenerator from "otp-generator";
 
 
@@ -16,7 +16,7 @@ const TokenPayloadSchema = z.object({
 
 type TokenPayload = z.infer<typeof TokenPayloadSchema>;
 
-const DEFAULT_ACCESS_TOKEN_EXPIRY: SignOptions["expiresIn"] = "15m";
+const DEFAULT_ACCESS_TOKEN_EXPIRY: SignOptions["expiresIn"] = TOKEN_EXPIRY.ACCESS_TOKEN;
 
 export const hashPassword = async (password : string) : Promise<string> => {
     // const salts = await bcrypt.genSalt(SALT_ROUNDS);
