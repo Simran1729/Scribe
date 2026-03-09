@@ -48,6 +48,5 @@ export const generateOTP = () : string => {
         digits : true,
         specialChars : false
     })  
-
     return otp;
 }

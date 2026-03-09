@@ -2,9 +2,9 @@ import { addDays } from "date-fns";
 import { HTTP_STATUS, TOKEN_EXPIRY, USER_ROLES } from "../../constants/httpStatus";
 import { prisma } from "../../lib/prisma";
 import { ApiError } from "../../utils/ApiError";
-import { generateToken, hashPassword } from "../../utils/authUtils";
+import { comparePasswords, generateToken, hashPassword } from "../../utils/authUtils";
 import { userResponseSchema } from "./auth.schema";
-import { SignUpDTO, userResponseDTO } from "./auth.types";
+import { LoginDTO, SignUpDTO, userResponseDTO } from "./auth.types";
 
 export const authService  = {
     createUser : async(data : SignUpDTO) : Promise<{
@@ -61,5 +61,52 @@ export const authService  = {
         })
 
         return newUser;
+    },
+
+    loginUser : async(data : LoginDTO) : Promise<{
+        user : userResponseDTO,
+        accessToken : string,
+        refreshToken : string
+    }> => {
+        const {email, password} = data;
+
+        const user = await prisma.user.findUnique({
+            where : {
+                email : email
+            }
+        })
+
+        if(!user){
+            throw new ApiError(HTTP_STATUS.NOT_FOUND, "User not found with this email")
+        };
+
+        const mathced = await comparePasswords(password, user.password);
+        if(!mathced){
+            throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "Passwords didnt match");
+        }
+
+        const payload = {
+            id : user.id,
+            email : user.email,
+            role : user.role
+        }
+
+        const accessToken = generateToken(payload, TOKEN_EXPIRY.ACCESS_TOKEN);
+        const refreshToken = generateToken(payload, TOKEN_EXPIRY.REFRESH_TOKEN);
+
+        await prisma.token.create({
+            data : {
+                token : refreshToken,
+                expiresAt : addDays(new Date(), TOKEN_EXPIRY.REFRESH_TOKEN_DAYS),
+                userId : user.id
+            }
+        })
+
+        return {
+            user : userResponseSchema.parse(user),
+            accessToken,
+            refreshToken
+        }
+
     }
 }
