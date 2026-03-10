@@ -6,7 +6,7 @@ const router = Router();
 
 router.post('/sign-up', asyncHanlder(authController.signUp));
 router.post('/login', asyncHanlder(authController.login));
-// router.post('/send-otp');
+router.post('/send-otp', asyncHanlder(authController.sendOTP));
 // router.post('/verify-otp');
 // router.post('/refresh');
 // router.post('/change-password');

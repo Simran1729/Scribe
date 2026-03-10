@@ -1,10 +1,12 @@
-import { addDays } from "date-fns";
+import { addDays, addMinutes } from "date-fns";
 import { HTTP_STATUS, TOKEN_EXPIRY, USER_ROLES } from "../../constants/httpStatus";
 import { prisma } from "../../lib/prisma";
 import { ApiError } from "../../utils/ApiError";
-import { comparePasswords, generateToken, hashPassword } from "../../utils/authUtils";
+import { comparePasswords, generateOTP, generateToken, hashPassword } from "../../utils/authUtils";
 import { userResponseSchema } from "./auth.schema";
-import { LoginDTO, SignUpDTO, userResponseDTO } from "./auth.types";
+import { LoginDTO, sendOtpDTO, SignUpDTO, userResponseDTO } from "./auth.types";
+import { sendEmail } from "../../utils/sendMail";
+import { otpTemplate } from "../../utils/emailTemplates";
 
 export const authService  = {
     createUser : async(data : SignUpDTO) : Promise<{
@@ -108,5 +110,38 @@ export const authService  = {
             refreshToken
         }
 
+    },
+
+    sendOtp : async (data: sendOtpDTO) : Promise<void>  => {
+        const userExists = await prisma.user.findUnique({
+            where : {
+                email : data.email
+            }
+        })
+
+        if(!userExists){
+            throw new ApiError(HTTP_STATUS.FORBIDDEN, "User doesnt exist with this email");
+        }
+
+        await prisma.emailOTP.deleteMany({
+            where : {
+                userId : userExists.id
+            }
+        })
+
+        const otp = generateOTP();
+        await prisma.emailOTP.create({
+            data : {
+                otp : otp,
+                userId : userExists.id,
+                expiresAt : addMinutes(new Date(), 5)
+            }
+        })
+
+        await sendEmail({
+            to : userExists.email,
+            subject : "OTP from Scribe",
+            html : otpTemplate(otp) 
+        })
     }
 }

@@ -18,4 +18,8 @@ export const userResponseSchema = z.object({
     role : z.enum(["ADMIN", "MODERATOR", "USER"])
 })
 
+export const sendOTPSchema = LoginSchema.omit({
+    "password" : true
+});
+
 // export const 

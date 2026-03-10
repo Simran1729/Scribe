@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { LoginSchema, signUpSchema } from "./auth.schema";
+import { LoginSchema, sendOTPSchema, signUpSchema } from "./auth.schema";
 import { authService } from "./auth.services";
 import { sendResponse } from "../../utils/sendResponse";
 import { HTTP_STATUS, TOKEN_EXPIRY } from "../../constants/httpStatus";
@@ -42,4 +42,14 @@ export const authController = {
             data : {user, accessToken}
         })
     },
+    sendOTP : async(req: Request, res : Response) => {
+        const parsed = sendOTPSchema.parse(req.body);
+
+        await authService.sendOtp(parsed);
+
+        sendResponse(res, HTTP_STATUS.OK, {
+            status : true,
+            message : "OTP sent successfully"
+        })
+    }
 }
