@@ -22,4 +22,8 @@ export const sendOTPSchema = LoginSchema.omit({
     "password" : true
 });
 
-// export const 
+export const verifyOTPSchema = sendOTPSchema.extend({
+    otp : z.string().min(6, "OTP must be six digits")
+})
+
+export const refreshTokenSchema = z.string();

@@ -2,9 +2,9 @@ import { addDays, addMinutes } from "date-fns";
 import { HTTP_STATUS, TOKEN_EXPIRY, USER_ROLES } from "../../constants/httpStatus";
 import { prisma } from "../../lib/prisma";
 import { ApiError } from "../../utils/ApiError";
-import { comparePasswords, generateOTP, generateToken, hashPassword } from "../../utils/authUtils";
+import { comparePasswords, generateOTP, generateToken, hashPassword, verifyToken } from "../../utils/authUtils";
 import { userResponseSchema } from "./auth.schema";
-import { LoginDTO, sendOtpDTO, SignUpDTO, userResponseDTO } from "./auth.types";
+import { LoginDTO, refreshTokenDTO, sendOtpDTO, SignUpDTO, userResponseDTO, verifyOtpDTO } from "./auth.types";
 import { sendEmail } from "../../utils/sendMail";
 import { otpTemplate } from "../../utils/emailTemplates";
 
@@ -143,5 +143,71 @@ export const authService  = {
             subject : "OTP from Scribe",
             html : otpTemplate(otp) 
         })
+    },
+
+    verifyOtp : async (data : verifyOtpDTO) : Promise<void> =>{
+        const {email, otp} = data;
+
+        const userExists = await prisma.user.findUnique({
+            where : {
+                email : email
+            }
+        })
+
+        if(!userExists){
+            throw new ApiError(HTTP_STATUS.NOT_FOUND, "User doesn't exist with this email")
+        }
+
+        const result = await prisma.emailOTP.findFirst({
+            where : {
+                userId : userExists.id,
+                otp : otp
+            }
+        })
+
+        if(!result){
+            throw new ApiError(HTTP_STATUS.BAD_REQUEST, "OTP didn't match")
+        }
+
+        if(result.expiresAt < new Date()){
+            throw new ApiError(HTTP_STATUS.BAD_REQUEST, "OTP expired")
+        }
+
+    },
+
+    refreshToken : async (token : refreshTokenDTO) : Promise<{
+        accessToken : string,
+        refreshToken : string,
+        expiresAt : Date
+    }> => {
+        const tokenExist = await prisma.token.findUnique({
+            where : {
+                token : token,
+            }
+        })
+
+        if(!tokenExist || tokenExist.expiresAt < new Date()){
+            throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "Session Expired, Login Again");
+        }
+
+        const decodedPayload = verifyToken(token);
+
+        const accessToken = generateToken(decodedPayload, TOKEN_EXPIRY.ACCESS_TOKEN);
+        const refreshToken = generateToken(decodedPayload, TOKEN_EXPIRY.REFRESH_TOKEN);
+
+        await prisma.token.update({
+            where : {
+                token : token
+            }, 
+            data : {
+                token : refreshToken
+            }
+        });
+
+        return {
+            accessToken, 
+            refreshToken,
+            expiresAt : tokenExist.expiresAt
+        };
     }
 }

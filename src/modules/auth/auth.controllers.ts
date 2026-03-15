@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
-import { LoginSchema, sendOTPSchema, signUpSchema } from "./auth.schema";
+import { LoginSchema, refreshTokenSchema, sendOTPSchema, signUpSchema, verifyOTPSchema } from "./auth.schema";
 import { authService } from "./auth.services";
 import { sendResponse } from "../../utils/sendResponse";
 import { HTTP_STATUS, TOKEN_EXPIRY } from "../../constants/httpStatus";
 import { addDays } from "date-fns";
+import { ApiError } from "../../utils/ApiError";
 
 export const authController = {
     signUp : async (req : Request, res : Response) => {
@@ -50,6 +51,36 @@ export const authController = {
         sendResponse(res, HTTP_STATUS.OK, {
             status : true,
             message : "OTP sent successfully"
+        })
+    },
+    verifyOTP : async(req: Request, res : Response) => {
+        const parsed = verifyOTPSchema.parse(req.body);
+
+        await authService.verifyOtp(parsed);
+
+        sendResponse(res, HTTP_STATUS.OK, {
+            status : true,
+            message : "OTP verified"
+        })
+    },
+    refreshToken : async( req: Request , res : Response) => {
+        const token = req.cookies.refreshToken;
+
+        const parsed = refreshTokenSchema.parse(token);
+        
+        const {accessToken, refreshToken, expiresAt} = await authService.refreshToken(parsed);
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly : true,
+            sameSite : "lax",
+            secure : false,
+            expires : expiresAt
+        })
+
+        sendResponse(res, HTTP_STATUS.OK, {
+            status : true,
+            message : "Token refreshed",
+            data : {accessToken}
         })
     }
 }
