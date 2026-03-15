@@ -1,4 +1,4 @@
-import {z} from 'zod';
+import {email, z} from 'zod';
 
 export const signUpSchema = z.object({
     email : z.email("Email is required"),
@@ -27,3 +27,9 @@ export const verifyOTPSchema = sendOTPSchema.extend({
 })
 
 export const refreshTokenSchema = z.string();
+export const forgotPasswordSchema = sendOTPSchema;
+
+export const resetPasswordSchema = z.object({
+    token : z.string(),
+    password : z.string().min(8, "Password must be atleast 8 characters")
+})

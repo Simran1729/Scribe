@@ -37,18 +37,28 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  profile      Profile?
-  blogs        Blog[]
-  comments     Comment[]
-  blogLikes    BlogLike[]
-  commentLikes CommentLike[]
-  followers    Follow[]      @relation("UserAsFollowing")
-  following    Follow[]      @relation("UserAsFollower")
-  tokens       Token[]
-  emailOTPs    EmailOTP[]
+  profile             Profile?
+  blogs               Blog[]
+  comments            Comment[]
+  blogLikes           BlogLike[]
+  commentLikes        CommentLike[]
+  followers           Follow[]             @relation("UserAsFollowing")
+  following           Follow[]             @relation("UserAsFollower")
+  tokens              Token[]
+  emailOTPs           EmailOTP[]
+  passwordResetTokens PasswordResetToken[]
 }
 
 model Token {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  User      User     @relation(fields: [userId], references: [id])
+  token     String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+model PasswordResetToken {
   id        Int      @id @default(autoincrement())
   userId    Int
   User      User     @relation(fields: [userId], references: [id])

@@ -4,9 +4,9 @@ import { prisma } from "../../lib/prisma";
 import { ApiError } from "../../utils/ApiError";
 import { comparePasswords, generateOTP, generateToken, hashPassword, verifyToken } from "../../utils/authUtils";
 import { userResponseSchema } from "./auth.schema";
-import { LoginDTO, refreshTokenDTO, sendOtpDTO, SignUpDTO, userResponseDTO, verifyOtpDTO } from "./auth.types";
+import { forgotPasswordDTO, LoginDTO, refreshTokenDTO, resetPasswordDTO, sendOtpDTO, SignUpDTO, userResponseDTO, verifyOtpDTO } from "./auth.types";
 import { sendEmail } from "../../utils/sendMail";
-import { otpTemplate } from "../../utils/emailTemplates";
+import { otpTemplate, passwordResetTemplate } from "../../utils/emailTemplates";
 
 export const authService  = {
     createUser : async(data : SignUpDTO) : Promise<{
@@ -209,5 +209,74 @@ export const authService  = {
             refreshToken,
             expiresAt : tokenExist.expiresAt
         };
+    }, 
+
+    forgotPassword : async(data : forgotPasswordDTO) : Promise<void> => {
+        const {email} = data;
+
+        const userExist = await prisma.user.findUnique({
+            where : {
+                email : email
+            }
+        })
+
+        if(!userExist){
+            throw new ApiError(HTTP_STATUS.BAD_REQUEST, "No user found with this mail")
+        }
+        const payload = {
+            id : userExist.id,
+            email : userExist.email,
+            role : userExist.role
+        }
+
+
+        const token = generateToken(payload, TOKEN_EXPIRY.PASSWORD_TOKEN);
+
+        await prisma.passwordResetToken.deleteMany({
+            where : {
+                userId : userExist.id
+            }
+        })
+        await prisma.passwordResetToken.create({
+            data : {
+                userId : userExist.id,
+                token : token,
+                expiresAt : addMinutes(new Date(), 5)
+            }
+        })
+
+        sendEmail({
+            to : userExist.email,
+            subject : "Password Reset Link",
+            html : passwordResetTemplate(token)
+        })
+    }, 
+
+    resetPassword : async(data : resetPasswordDTO) : Promise<void> => {
+        const {token, password} = data;
+
+        const tokenExist = await prisma.passwordResetToken.findUnique({
+            where : {
+                token : token
+            }
+        })
+
+        if(!tokenExist || tokenExist.expiresAt < new Date()){
+            throw new ApiError(HTTP_STATUS.FORBIDDEN, "Token Expired")
+        }
+
+        const decodedPayload = verifyToken(token);
+        const hash =  await hashPassword(password);
+
+        await prisma.$transaction(async (tx) => {
+                await tx.user.update({
+                        where: { email: decodedPayload.email },
+                        data: { password: hash }
+                });
+
+                await tx.token.deleteMany({
+                        where: { userId: decodedPayload.id }
+                });
+        });
     }
 }

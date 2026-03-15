@@ -18,5 +18,6 @@ export const USER_ROLES = {
 export const TOKEN_EXPIRY = {
   ACCESS_TOKEN : "15m",
   REFRESH_TOKEN : "7d",
-  REFRESH_TOKEN_DAYS : 7
+  REFRESH_TOKEN_DAYS : 7,
+  PASSWORD_TOKEN : "5m",
 } as const;

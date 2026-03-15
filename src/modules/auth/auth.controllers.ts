@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { LoginSchema, refreshTokenSchema, sendOTPSchema, signUpSchema, verifyOTPSchema } from "./auth.schema";
+import { forgotPasswordSchema, LoginSchema, refreshTokenSchema, resetPasswordSchema, sendOTPSchema, signUpSchema, verifyOTPSchema } from "./auth.schema";
 import { authService } from "./auth.services";
 import { sendResponse } from "../../utils/sendResponse";
 import { HTTP_STATUS, TOKEN_EXPIRY } from "../../constants/httpStatus";
@@ -81,6 +81,27 @@ export const authController = {
             status : true,
             message : "Token refreshed",
             data : {accessToken}
+        })
+    },
+    forgotPassword : async(req : Request, res : Response) => {
+        const parsed = forgotPasswordSchema.parse(req.body);
+
+        await authService.forgotPassword(parsed);
+
+        sendResponse(res, HTTP_STATUS.OK, {
+            status : true,
+            message : "An Email with Reset Link has been sent to your registered email"
+        })
+    }, 
+
+    resetPassword : async (req : Request , res : Response) => {
+        const parsed = resetPasswordSchema.parse(req.body);
+
+        await authService.resetPassword(parsed);
+
+        sendResponse(res, HTTP_STATUS.OK, {
+            status : true, 
+            message : "Password Reset successful. Login Again"
         })
     }
 }

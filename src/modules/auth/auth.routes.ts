@@ -8,7 +8,7 @@ router.post('/sign-up', asyncHanlder(authController.signUp));
 router.post('/login', asyncHanlder(authController.login));
 router.post('/send-otp', asyncHanlder(authController.sendOTP));
 router.post('/verify-otp', asyncHanlder(authController.verifyOTP));
-// router.post('/refresh');
+router.post('/refresh', asyncHanlder(authController.refreshToken));
 // router.post('/forgot-password');
 // router.post('/reset-password');
 // router.post('/logout');
