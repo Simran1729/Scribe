@@ -4,7 +4,7 @@ import { prisma } from "../../lib/prisma";
 import { ApiError } from "../../utils/ApiError";
 import { comparePasswords, generateOTP, generateToken, hashPassword, verifyToken } from "../../utils/authUtils";
 import { userResponseSchema } from "./auth.schema";
-import { forgotPasswordDTO, LoginDTO, refreshTokenDTO, resetPasswordDTO, sendOtpDTO, SignUpDTO, userResponseDTO, verifyOtpDTO } from "./auth.types";
+import { forgotPasswordDTO, LoginDTO, logoutAllDTO, logoutDTO, refreshTokenDTO, resetPasswordDTO, sendOtpDTO, SignUpDTO, userResponseDTO, verifyOtpDTO } from "./auth.types";
 import { sendEmail } from "../../utils/sendMail";
 import { otpTemplate, passwordResetTemplate } from "../../utils/emailTemplates";
 
@@ -84,7 +84,7 @@ export const authService  = {
 
         const mathced = await comparePasswords(password, user.password);
         if(!mathced){
-            throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "Passwords didnt match");
+            throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "Invalid Password");
         }
 
         const payload = {
@@ -274,9 +274,37 @@ export const authService  = {
                         data: { password: hash }
                 });
 
-                await tx.token.deleteMany({
+                await tx.passwordResetToken.deleteMany({
                         where: { userId: decodedPayload.id }
                 });
         });
+    }, 
+
+    logout : async(token : logoutDTO) : Promise<void> => {
+        await prisma.token.delete({
+            where : {
+                token : token
+            }
+        })
+
+    }, 
+
+    logoutAll : async(id : number) : Promise<void> => {
+
+        const userExist = await prisma.user.findUnique({
+            where : {
+                id : id
+            }
+        })
+
+        if(!userExist){
+            throw new ApiError(HTTP_STATUS.BAD_REQUEST, "No user exist with this email")
+        }
+
+        await prisma.token.deleteMany({
+            where : {
+                userId : userExist.id
+            }
+        })
     }
 }

@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
-import { forgotPasswordSchema, LoginSchema, refreshTokenSchema, resetPasswordSchema, sendOTPSchema, signUpSchema, verifyOTPSchema } from "./auth.schema";
+import { forgotPasswordSchema, LoginSchema, logoutAllSchema, logoutSchema, refreshTokenSchema, resetPasswordSchema, sendOTPSchema, signUpSchema, verifyOTPSchema } from "./auth.schema";
 import { authService } from "./auth.services";
 import { sendResponse } from "../../utils/sendResponse";
 import { HTTP_STATUS, TOKEN_EXPIRY } from "../../constants/httpStatus";
 import { addDays } from "date-fns";
 import { ApiError } from "../../utils/ApiError";
+import { AuthRequest } from "./auth.types";
 
 export const authController = {
     signUp : async (req : Request, res : Response) => {
@@ -65,6 +66,10 @@ export const authController = {
     },
     refreshToken : async( req: Request , res : Response) => {
         const token = req.cookies.refreshToken;
+        
+        if(!token){
+            throw new ApiError(HTTP_STATUS.BAD_REQUEST, "No token found in cookies")
+        }
 
         const parsed = refreshTokenSchema.parse(token);
         
@@ -103,5 +108,45 @@ export const authController = {
             status : true, 
             message : "Password Reset successful. Login Again"
         })
+    },
+
+    logout : async (req : Request, res : Response) => {
+        const token = req.cookies.refreshToken;
+
+        if(!token){
+            throw new ApiError(HTTP_STATUS.BAD_REQUEST, "No token found in cookies")
+        }
+
+        const parsed = logoutSchema.parse(token);
+
+        await authService.logout(parsed);
+
+        res.clearCookie('refreshToken', {
+                httpOnly: true,
+                sameSite: "lax",
+                secure: false
+        });
+
+        sendResponse(res, HTTP_STATUS.OK, {
+            status: true, 
+            message : "Logout Successful"
+        })
+    }, 
+
+    logoutAll : async(req : Request, res : Response) => {
+        // const parsed = logoutAllSchema.parse(req.user!.id);
+
+        await authService.logoutAll(req.user!.id);
+
+        res.clearCookie('refreshToken', {
+            httpOnly: true,
+            sameSite: "lax",
+            secure: false
+        });
+
+        sendResponse(res, HTTP_STATUS.OK, {
+            status : true,
+            message : "User has been logged out of all the devices"
+        } )
     }
 }

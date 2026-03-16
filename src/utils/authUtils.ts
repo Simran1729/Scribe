@@ -8,13 +8,13 @@ import otpGenerator from "otp-generator";
 
 const SALT_ROUNDS = 10;
 
-const TokenPayloadSchema = z.object({
+export const TokenPayloadSchema = z.object({
     id : z.number(),
     email : z.email(),
     role : z.enum([USER_ROLES.ADMIN, USER_ROLES.MODERATOR, USER_ROLES.USER])
 })
 
-type TokenPayload = z.infer<typeof TokenPayloadSchema>;
+export type TokenPayload = z.infer<typeof TokenPayloadSchema>;
 
 const DEFAULT_ACCESS_TOKEN_EXPIRY: SignOptions["expiresIn"] = TOKEN_EXPIRY.ACCESS_TOKEN;
 

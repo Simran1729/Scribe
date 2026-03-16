@@ -1,4 +1,4 @@
-import {email, z} from 'zod';
+import {z} from 'zod';
 
 export const signUpSchema = z.object({
     email : z.email("Email is required"),
@@ -33,3 +33,6 @@ export const resetPasswordSchema = z.object({
     token : z.string(),
     password : z.string().min(8, "Password must be atleast 8 characters")
 })
+
+export const logoutSchema = z.string();
+export const logoutAllSchema = sendOTPSchema;
