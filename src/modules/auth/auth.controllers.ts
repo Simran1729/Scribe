@@ -5,7 +5,6 @@ import { sendResponse } from "../../utils/sendResponse";
 import { HTTP_STATUS, TOKEN_EXPIRY } from "../../constants/httpStatus";
 import { addDays } from "date-fns";
 import { ApiError } from "../../utils/ApiError";
-import { AuthRequest } from "./auth.types";
 
 export const authController = {
     signUp : async (req : Request, res : Response) => {
