@@ -4,6 +4,7 @@ import { JWT_KEY } from "../config/env";
 import {z} from "zod";
 import { TOKEN_EXPIRY, USER_ROLES } from "../constants/httpStatus";
 import otpGenerator from "otp-generator";
+import { Request } from "express";
 
 
 const SALT_ROUNDS = 10;
@@ -19,9 +20,6 @@ export type TokenPayload = z.infer<typeof TokenPayloadSchema>;
 const DEFAULT_ACCESS_TOKEN_EXPIRY: SignOptions["expiresIn"] = TOKEN_EXPIRY.ACCESS_TOKEN;
 
 export const hashPassword = async (password : string) : Promise<string> => {
-    // const salts = await bcrypt.genSalt(SALT_ROUNDS);
-    // const hash = await bcrypt.hash(password, salts);
-    // return hash;
       return bcrypt.hash(password, SALT_ROUNDS);
 }
 
@@ -49,4 +47,8 @@ export const generateOTP = () : string => {
         specialChars : false
     })  
     return otp;
+}
+
+export const validateRole = (role : string, req : Request) : boolean => {
+    return req.user!.role === role
 }

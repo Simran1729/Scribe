@@ -22,10 +22,7 @@ export const authMiddleware = (
   }
 
   try {
-    const decoded = verifyToken(token);
-
-    const payload = TokenPayloadSchema.parse(decoded);
-
+    const payload = verifyToken(token);
     req.user = payload;
 
     next();
