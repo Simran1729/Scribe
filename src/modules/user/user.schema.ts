@@ -22,3 +22,10 @@ export const promoteDemoteUserSchema = z.object({
     userId : z.number(),
     action : z.enum(VALID_ACTIONS)
 })
+
+export const blockUserSchema = z.object({
+    id : z.number(),
+    type : z.boolean()
+})
+
+export const deactivateUserSchema = blockUserSchema;

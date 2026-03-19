@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { changePasswordSchema, promoteDemoteUserSchema, updateProfileSchema } from "./user.schema";
+import { blockUserSchema, changePasswordSchema, deactivateUserSchema, promoteDemoteUserSchema, updateProfileSchema } from "./user.schema";
 import { userService } from "./user.services";
 import { sendResponse } from "../../utils/sendResponse";
 import { HTTP_STATUS } from "../../constants/httpStatus";
@@ -51,10 +51,12 @@ export const userController = {
     }, 
 
     blockUser : async (req : Request, res : Response) => {
+        const data = blockUserSchema.parse(req.body);
 
+        
     }, 
      
     deactivateUser : async (req : Request, res : Response) => {
-
+        const data = deactivateUserSchema.parse(req.body)
     }
 }

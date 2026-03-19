@@ -6,10 +6,9 @@ import { userController } from "./user.controllers";
 const router = Router();
 
 router.post('/update-profile', authMiddleware, asyncHanlder(userController.updateProfile));
-// router.post('/change-password');
-// router.post('/promote-demote-user');
-// router.post('/block-user');
-// router.post('/deactivate-account');
-
+router.post('/change-password', authMiddleware, asyncHanlder(userController.changePassword));
+router.post('/promote-demote-user', authMiddleware, asyncHanlder(userController.promoteDemoteUser));
+router.post('/block-user', authMiddleware, asyncHanlder(userController.blockUser));
+router.post('/deactivate-account', authMiddleware, asyncHanlder(userController.deactivateUser));
 
 export default router;

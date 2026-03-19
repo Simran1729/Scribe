@@ -78,7 +78,7 @@ export const authService  = {
             }
         })
 
-        if(!user){
+        if(!user || !user.isActive || !user.isBlocked){
             throw new ApiError(HTTP_STATUS.NOT_FOUND, "User not found with this email")
         };
 
@@ -220,8 +220,8 @@ export const authService  = {
             }
         })
 
-        if(!userExist){
-            throw new ApiError(HTTP_STATUS.BAD_REQUEST, "No user found with this mail")
+        if(!userExist || !userExist.isActive || !userExist.isBlocked){
+            throw new ApiError(HTTP_STATUS.BAD_REQUEST, "No Active user found with this mail")
         }
         const payload = {
             id : userExist.id,

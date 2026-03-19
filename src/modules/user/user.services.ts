@@ -3,10 +3,10 @@ import { ROLE_TRANSITIONS } from "../../constants/user.constants";
 import { prisma } from "../../lib/prisma";
 import { ApiError } from "../../utils/ApiError";
 import { comparePasswords, hashPassword } from "../../utils/authUtils";
-import { changePasswordDTO, promoteDemoteUserDTO, updateProfileDTO } from "./user.types";
+import { blockUserDTO, changePasswordDTO, deactivateUserDTO, promoteDemoteUserDTO, updateProfileDTO } from "./user.types";
 
 export const userService = {
-    updateProfile : async (data : updateProfileDTO, userId : number) => {
+    updateProfile : async (data : updateProfileDTO, userId : number) : Promise<void> => {
         const user =  await prisma.user.findUnique({
             where : {
                 id : userId
@@ -25,7 +25,7 @@ export const userService = {
         })
     },
 
-    changePassword : async (data : changePasswordDTO , userId : number) => {
+    changePassword : async (data : changePasswordDTO , userId : number) : Promise<void> => {
         const user = await prisma.user.findUnique({
             where : {
                 id : userId
@@ -82,5 +82,59 @@ export const userService = {
             }
         })
         
-    }
+    },
+
+    blockUser : async(data : blockUserDTO) : Promise<void> => {
+        const {id, type} = data;
+
+        const user = await prisma.user.findUnique({
+            where : {
+                id : id
+            }
+        })
+
+        if(!user){
+            throw new ApiError(HTTP_STATUS.BAD_REQUEST, "No Active user Found")
+        }
+
+        if(type === user.isBlocked){
+            throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Invalid Request, User already in requrest state")
+        }
+
+        await prisma.user.update({
+            where : {
+                id : id
+            },
+            data : {
+                isBlocked : type
+            }
+        })
+    },
+
+    deactivateUser : async(data : deactivateUserDTO) : Promise<void> => {
+        const {id, type} = data;
+
+        const user = await prisma.user.findUnique({
+            where : {
+                id : id
+            }
+        })
+
+        if(!user){
+            throw new ApiError(HTTP_STATUS.BAD_REQUEST, "No Active user Found")
+        }
+
+        if(type === user.isActive){
+            throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Invalid Request, User already in requrest state")
+        }
+
+        await prisma.user.update({
+            where : {
+                id : id
+            },
+            data : {
+                isActive : type
+            }
+        })
+    } 
 }
