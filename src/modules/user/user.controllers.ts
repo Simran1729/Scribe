@@ -53,10 +53,20 @@ export const userController = {
     blockUser : async (req : Request, res : Response) => {
         const data = blockUserSchema.parse(req.body);
 
-        
+        await userService.blockUser(data)
+        sendResponse(res, HTTP_STATUS.OK, {
+            status  : true, 
+            message : "User Blocked successfully"
+        })
     }, 
      
     deactivateUser : async (req : Request, res : Response) => {
-        const data = deactivateUserSchema.parse(req.body)
+        const data = deactivateUserSchema.parse(req.body);
+
+        await userService.deactivateUser(data)
+        sendResponse(res, HTTP_STATUS.OK, {
+            status : true,
+            message : "User Deactivated Successfully"
+        })
     }
 }
