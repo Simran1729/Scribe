@@ -9,11 +9,7 @@ import { sendEmail } from "../../utils/sendMail";
 import { otpTemplate, passwordResetTemplate } from "../../utils/emailTemplates";
 
 export const authService  = {
-    createUser : async(data : SignUpDTO) : Promise<{
-        user : userResponseDTO
-        accessToken : string,
-        refreshToken : string
-    }> => {
+        createUser : async(data : SignUpDTO) : Promise<void> => {
         const existingUser = await prisma.user.findUnique({
             where : {
                 email : data.email
@@ -25,7 +21,7 @@ export const authService  = {
         }
 
         const hashedPassword = await hashPassword(data.password);
-        const newUser = await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async (tx) => {
                 const user = await tx.user.create({
                 data : {
                         name : data.name,
@@ -38,31 +34,22 @@ export const authService  = {
                     }
                 })
 
-                const payload = {
-                    id : user.id,
-                    email : data.email,
-                    role : USER_ROLES.USER
-                }
-
-                const accessToken = generateToken(payload, TOKEN_EXPIRY.ACCESS_TOKEN);
-                const refreshToken = generateToken(payload, TOKEN_EXPIRY.REFRESH_TOKEN);
-
-                await tx.token.create({
+                const otp = generateOTP();
+                await tx.emailOTP.create({
                     data : {
-                        token : refreshToken,
-                        expiresAt : addDays(new Date(), TOKEN_EXPIRY.REFRESH_TOKEN_DAYS),
-                        userId : user.id
+                        otp : otp,
+                        userId : user.id,
+                        expiresAt : addMinutes(new Date(), 5)
                     }
                 })
 
-                return {
-                    user : userResponseSchema.parse(user),
-                    accessToken,
-                    refreshToken
-                }
+                await sendEmail({
+                    to : user.email,
+                    subject : "OTP from Scribe",
+                    html : otpTemplate(otp) 
+                })
         })
 
-        return newUser;
     },
 
     loginUser : async(data : LoginDTO) : Promise<{
@@ -78,9 +65,13 @@ export const authService  = {
             }
         })
 
-        if(!user || !user.isActive || !user.isBlocked){
+        if(!user || !user.isActive || user.isBlocked){
             throw new ApiError(HTTP_STATUS.NOT_FOUND, "User not found with this email")
         };
+
+        if(!user.isEmailVerified){
+            throw new ApiError(HTTP_STATUS.BAD_REQUEST, "First verify email first")
+        }
 
         const mathced = await comparePasswords(password, user.password);
         if(!mathced){
@@ -143,9 +134,14 @@ export const authService  = {
             subject : "OTP from Scribe",
             html : otpTemplate(otp) 
         })
+
     },
 
-    verifyOtp : async (data : verifyOtpDTO) : Promise<void> =>{
+    verifyOtp : async (data : verifyOtpDTO) : Promise<{
+        user : userResponseDTO,
+        accessToken : string,
+        refreshToken : string
+    }> =>{
         const {email, otp} = data;
 
         const userExists = await prisma.user.findUnique({
@@ -172,6 +168,34 @@ export const authService  = {
         if(result.expiresAt < new Date()){
             throw new ApiError(HTTP_STATUS.BAD_REQUEST, "OTP expired")
         }
+        
+        const payload = {
+            id : userExists.id,
+            email : data.email,
+            role : USER_ROLES.USER
+        }
+
+        const accessToken = generateToken(payload, TOKEN_EXPIRY.ACCESS_TOKEN);
+        const refreshToken = generateToken(payload, TOKEN_EXPIRY.REFRESH_TOKEN);
+
+        await prisma.user.update({
+            where : {
+                id : userExists.id
+            }, data : {
+                isEmailVerified : true
+            }
+        })
+
+        await prisma.token.create({
+            data : {
+                token : refreshToken,
+                expiresAt : addDays(new Date(), TOKEN_EXPIRY.REFRESH_TOKEN_DAYS),
+                userId : userExists.id
+            }
+        })
+
+        const user = userResponseSchema.parse(userExists)
+        return {user, accessToken, refreshToken}
 
     },
 
@@ -220,7 +244,7 @@ export const authService  = {
             }
         })
 
-        if(!userExist || !userExist.isActive || !userExist.isBlocked){
+        if(!userExist || !userExist.isActive || userExist.isBlocked){
             throw new ApiError(HTTP_STATUS.BAD_REQUEST, "No Active user found with this mail")
         }
         const payload = {
@@ -250,6 +274,7 @@ export const authService  = {
             subject : "Password Reset Link",
             html : passwordResetTemplate(token)
         })
+
     }, 
 
     resetPassword : async(data : resetPasswordDTO) : Promise<void> => {
@@ -278,6 +303,7 @@ export const authService  = {
                         where: { userId: decodedPayload.id }
                 });
         });
+
     }, 
 
     logout : async(token : logoutDTO) : Promise<void> => {
@@ -286,6 +312,7 @@ export const authService  = {
                 token : token
             }
         })
+
 
     }, 
 
@@ -306,5 +333,6 @@ export const authService  = {
                 userId : userExist.id
             }
         })
+
     }
 }

@@ -10,19 +10,12 @@ export const authController = {
     signUp : async (req : Request, res : Response) => {
         const parsedBody = signUpSchema.parse(req.body);
 
-        const {user, accessToken, refreshToken} = await authService.createUser(parsedBody);
-
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly : true,
-            sameSite : "lax",
-            secure : false,
-            expires : addDays(new Date(), TOKEN_EXPIRY.REFRESH_TOKEN_DAYS)
-        })
+        await authService.createUser(parsedBody);
 
         sendResponse(res, HTTP_STATUS.CREATED, {
             status : true,
-            message : "User Created Successfully",
-            data : {user, accessToken}
+            message : "User Created Successfully, Kindly verify OTP to login",
+            // data : {user, accessToken}
         })
     }, 
     login : async(req : Request, res : Response) => {
@@ -56,11 +49,19 @@ export const authController = {
     verifyOTP : async(req: Request, res : Response) => {
         const parsed = verifyOTPSchema.parse(req.body);
 
-        await authService.verifyOtp(parsed);
+        const {user, accessToken, refreshToken} = await authService.verifyOtp(parsed);
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly : true,
+            sameSite : "lax",
+            secure : false,
+            expires : addDays(new Date(), TOKEN_EXPIRY.REFRESH_TOKEN_DAYS)
+        })
 
         sendResponse(res, HTTP_STATUS.OK, {
             status : true,
-            message : "OTP verified"
+            message : "OTP verified",
+            data : {user, accessToken}
         })
     },
     refreshToken : async( req: Request , res : Response) => {
