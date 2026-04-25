@@ -4,9 +4,13 @@ import { prisma } from "../../lib/prisma";
 import { ApiError } from "../../utils/ApiError";
 import { comparePasswords, hashPassword } from "../../utils/authUtils";
 import { blockUserDTO, changePasswordDTO, deactivateUserDTO, promoteDemoteUserDTO, updateProfileDTO } from "./user.types";
+import type { Logger } from "pino";
+import { logger } from "../../utils/logger";
+
+const serviceLogger = logger.child({ service: "user" });
 
 export const userService = {
-    updateProfile : async (data : updateProfileDTO, userId : number) : Promise<void> => {
+    updateProfile : async (data : updateProfileDTO, userId : number, log : Logger = serviceLogger) : Promise<void> => {
         const user =  await prisma.user.findUnique({
             where : {
                 id : userId
@@ -23,9 +27,11 @@ export const userService = {
             },
             data : data
         })
+
+        log.info({ userId }, "profile updated");
     },
 
-    changePassword : async (data : changePasswordDTO , userId : number) : Promise<void> => {
+    changePassword : async (data : changePasswordDTO , userId : number, log : Logger = serviceLogger) : Promise<void> => {
         const user = await prisma.user.findUnique({
             where : {
                 id : userId
@@ -50,9 +56,11 @@ export const userService = {
                 password : newHash
             }
         })
+
+        log.info({ userId }, "password changed");
     },
 
-    promoteDemoteUser : async (data : promoteDemoteUserDTO) => {
+    promoteDemoteUser : async (data : promoteDemoteUserDTO, log : Logger = serviceLogger) => {
         const transition = ROLE_TRANSITIONS[data.action];
 
         if(!transition){
@@ -81,10 +89,15 @@ export const userService = {
                 role : transition.TO
             }
         })
+
+        log.info(
+            { targetUserId: data.userId, action: data.action, toRole: transition.TO },
+            "role updated"
+        );
         
     },
 
-    blockUser : async(data : blockUserDTO) : Promise<void> => {
+    blockUser : async(data : blockUserDTO, log : Logger = serviceLogger) : Promise<void> => {
         const {id, type} = data;
 
         const user = await prisma.user.findUnique({
@@ -109,9 +122,11 @@ export const userService = {
                 isBlocked : type
             }
         })
+
+        log.info({ targetUserId: id, isBlocked: type }, "user block updated");
     },
 
-    deactivateUser : async(data : deactivateUserDTO) : Promise<void> => {
+    deactivateUser : async(data : deactivateUserDTO, log : Logger = serviceLogger) : Promise<void> => {
         const {id, type} = data;
 
         const user = await prisma.user.findUnique({
@@ -136,5 +151,7 @@ export const userService = {
                 isActive : type
             }
         })
+
+        log.info({ targetUserId: id, isActive: type }, "user active updated");
     } 
 }

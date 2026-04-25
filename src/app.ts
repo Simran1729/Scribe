@@ -4,10 +4,12 @@ import cookieParser from "cookie-parser";
 import v1Routes from "../src/routes/v1/index"
 import { HTTP_STATUS } from "./constants/httpStatus";
 import { errorMiddleware } from "./middlewares/error.middleware";
+import { httpLogger } from "./middlewares/logger.middleware";
 import { ApiError } from "./utils/ApiError";
 
 const app  = express();
 
+app.use(httpLogger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

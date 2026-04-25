@@ -7,9 +7,13 @@ import { userResponseSchema } from "./auth.schema";
 import { forgotPasswordDTO, LoginDTO, logoutAllDTO, logoutDTO, refreshTokenDTO, resetPasswordDTO, sendOtpDTO, SignUpDTO, userResponseDTO, verifyOtpDTO } from "./auth.types";
 import { sendEmail } from "../../utils/sendMail";
 import { otpTemplate, passwordResetTemplate } from "../../utils/emailTemplates";
+import type { Logger } from "pino";
+import { logger } from "../../utils/logger";
+
+const serviceLogger = logger.child({ service: "auth" });
 
 export const authService  = {
-        createUser : async(data : SignUpDTO) : Promise<void> => {
+        createUser : async(data : SignUpDTO, log : Logger = serviceLogger) : Promise<void> => {
         const existingUser = await prisma.user.findUnique({
             where : {
                 email : data.email
@@ -21,6 +25,7 @@ export const authService  = {
         }
 
         const hashedPassword = await hashPassword(data.password);
+        let createdUserId: number | undefined;
         await prisma.$transaction(async (tx) => {
                 const user = await tx.user.create({
                 data : {
@@ -33,6 +38,8 @@ export const authService  = {
                         }, 
                     }
                 })
+
+                createdUserId = user.id;
 
                 const otp = generateOTP();
                 await tx.emailOTP.create({
@@ -50,9 +57,11 @@ export const authService  = {
                 })
         })
 
+        log.info({ userId: createdUserId }, "user created");
+
     },
 
-    loginUser : async(data : LoginDTO) : Promise<{
+    loginUser : async(data : LoginDTO, log : Logger = serviceLogger) : Promise<{
         user : userResponseDTO,
         accessToken : string,
         refreshToken : string
@@ -95,6 +104,7 @@ export const authService  = {
             }
         })
 
+        log.info({ userId: user.id }, "login successful");
         return {
             user : userResponseSchema.parse(user),
             accessToken,
@@ -103,7 +113,7 @@ export const authService  = {
 
     },
 
-    sendOtp : async (data: sendOtpDTO) : Promise<void>  => {
+    sendOtp : async (data: sendOtpDTO, log : Logger = serviceLogger) : Promise<void>  => {
         const userExists = await prisma.user.findUnique({
             where : {
                 email : data.email
@@ -135,9 +145,10 @@ export const authService  = {
             html : otpTemplate(otp) 
         })
 
+        log.info({ userId: userExists.id }, "otp sent");
     },
 
-    verifyOtp : async (data : verifyOtpDTO) : Promise<{
+    verifyOtp : async (data : verifyOtpDTO, log : Logger = serviceLogger) : Promise<{
         user : userResponseDTO,
         accessToken : string,
         refreshToken : string
@@ -195,11 +206,12 @@ export const authService  = {
         })
 
         const user = userResponseSchema.parse(userExists)
+        log.info({ userId: userExists.id }, "email verified");
         return {user, accessToken, refreshToken}
 
     },
 
-    refreshToken : async (token : refreshTokenDTO) : Promise<{
+    refreshToken : async (token : refreshTokenDTO, log : Logger = serviceLogger) : Promise<{
         accessToken : string,
         refreshToken : string,
         expiresAt : Date
@@ -228,6 +240,7 @@ export const authService  = {
             }
         });
 
+        log.info({ userId: decodedPayload.id }, "token refreshed");
         return {
             accessToken, 
             refreshToken,
@@ -235,7 +248,7 @@ export const authService  = {
         };
     }, 
 
-    forgotPassword : async(data : forgotPasswordDTO) : Promise<void> => {
+    forgotPassword : async(data : forgotPasswordDTO, log : Logger = serviceLogger) : Promise<void> => {
         const {email} = data;
 
         const userExist = await prisma.user.findUnique({
@@ -275,9 +288,10 @@ export const authService  = {
             html : passwordResetTemplate(token)
         })
 
+        log.info({ userId: userExist.id }, "password reset email queued");
     }, 
 
-    resetPassword : async(data : resetPasswordDTO) : Promise<void> => {
+    resetPassword : async(data : resetPasswordDTO, log : Logger = serviceLogger) : Promise<void> => {
         const {token, password} = data;
 
         const tokenExist = await prisma.passwordResetToken.findUnique({
@@ -304,9 +318,10 @@ export const authService  = {
                 });
         });
 
+        log.info({ userId: decodedPayload.id }, "password reset successful");
     }, 
 
-    logout : async(token : logoutDTO) : Promise<void> => {
+    logout : async(token : logoutDTO, _log : Logger = serviceLogger) : Promise<void> => {
         await prisma.token.delete({
             where : {
                 token : token
@@ -316,7 +331,7 @@ export const authService  = {
 
     }, 
 
-    logoutAll : async(id : number) : Promise<void> => {
+    logoutAll : async(id : number, log : Logger = serviceLogger) : Promise<void> => {
 
         const userExist = await prisma.user.findUnique({
             where : {
@@ -334,5 +349,6 @@ export const authService  = {
             }
         })
 
+        log.info({ userId: userExist.id }, "logged out from all devices");
     }
 }

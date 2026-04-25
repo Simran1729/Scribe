@@ -1,5 +1,9 @@
 import { prisma } from "../../lib/prisma"
 import { queryRes } from "../../utils/queryParser"
+import type { Logger } from "pino";
+import { logger } from "../../utils/logger";
+
+const serviceLogger = logger.child({ service: "tag" });
 
 type TagResponseDTO = {
     id : number,
@@ -7,7 +11,10 @@ type TagResponseDTO = {
 }
 
 
-export const getTags = async (query : queryRes) : Promise<TagResponseDTO[]> => {
+export const getTags = async (
+    query : queryRes,
+    log : Logger = serviceLogger
+) : Promise<TagResponseDTO[]> => {
     const {search, order, cursor, limit, sortBy} = query;
 
     const allowedSortFields = ["createdAt", "name"];
@@ -35,5 +42,9 @@ export const getTags = async (query : queryRes) : Promise<TagResponseDTO[]> => {
         }
     })
 
+    log.info(
+        { hasSearch: Boolean(search), sortBy: safeSortBy, order, limit, returned: tags.length },
+        "tags fetched"
+    );
     return tags;
 }

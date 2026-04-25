@@ -11,7 +11,7 @@ export const userController = {
     updateProfile : async(req : Request, res : Response) => {
         const parsed = updateProfileSchema.parse(req.body);
 
-        await userService.updateProfile(parsed, req.user!.id);
+        await userService.updateProfile(parsed, req.user!.id, req.log);
 
         sendResponse(res, HTTP_STATUS.OK, {
             status : true,
@@ -23,7 +23,7 @@ export const userController = {
     changePassword : async (req : Request, res : Response) => {
         const parsed = changePasswordSchema.parse(req.body);
         
-        await userService.changePassword(parsed, req.user!.id);
+        await userService.changePassword(parsed, req.user!.id, req.log);
 
         sendResponse(res, HTTP_STATUS.OK, {
             status : true,
@@ -42,7 +42,7 @@ export const userController = {
             throw new ApiError(HTTP_STATUS.FORBIDDEN, "User can't change their own role")
         }
 
-        await userService.promoteDemoteUser(parsed);
+        await userService.promoteDemoteUser(parsed, req.log);
 
         sendResponse(res, HTTP_STATUS.OK, {
             status : true,
@@ -53,7 +53,7 @@ export const userController = {
     blockUser : async (req : Request, res : Response) => {
         const data = blockUserSchema.parse(req.body);
 
-        await userService.blockUser(data)
+        await userService.blockUser(data, req.log)
         sendResponse(res, HTTP_STATUS.OK, {
             status  : true, 
             message : "User Blocked successfully"
@@ -63,7 +63,7 @@ export const userController = {
     deactivateUser : async (req : Request, res : Response) => {
         const data = deactivateUserSchema.parse(req.body);
 
-        await userService.deactivateUser(data)
+        await userService.deactivateUser(data, req.log)
         sendResponse(res, HTTP_STATUS.OK, {
             status : true,
             message : "User Deactivated Successfully"

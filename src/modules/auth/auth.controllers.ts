@@ -10,7 +10,7 @@ export const authController = {
     signUp : async (req : Request, res : Response) => {
         const parsedBody = signUpSchema.parse(req.body);
 
-        await authService.createUser(parsedBody);
+        await authService.createUser(parsedBody, req.log);
 
         sendResponse(res, HTTP_STATUS.CREATED, {
             status : true,
@@ -21,7 +21,7 @@ export const authController = {
     login : async(req : Request, res : Response) => {
         const parsed = LoginSchema.parse(req.body);
         
-        const {user, accessToken, refreshToken} = await authService.loginUser(parsed)
+        const {user, accessToken, refreshToken} = await authService.loginUser(parsed, req.log)
 
         res.cookie('refreshToken', refreshToken,{
             httpOnly : true,
@@ -39,7 +39,7 @@ export const authController = {
     sendOTP : async(req: Request, res : Response) => {
         const parsed = sendOTPSchema.parse(req.body);
 
-        await authService.sendOtp(parsed);
+        await authService.sendOtp(parsed, req.log);
 
         sendResponse(res, HTTP_STATUS.OK, {
             status : true,
@@ -49,7 +49,7 @@ export const authController = {
     verifyOTP : async(req: Request, res : Response) => {
         const parsed = verifyOTPSchema.parse(req.body);
 
-        const {user, accessToken, refreshToken} = await authService.verifyOtp(parsed);
+        const {user, accessToken, refreshToken} = await authService.verifyOtp(parsed, req.log);
 
         res.cookie('refreshToken', refreshToken, {
             httpOnly : true,
@@ -73,7 +73,7 @@ export const authController = {
 
         const parsed = refreshTokenSchema.parse(token);
         
-        const {accessToken, refreshToken, expiresAt} = await authService.refreshToken(parsed);
+        const {accessToken, refreshToken, expiresAt} = await authService.refreshToken(parsed, req.log);
 
         res.cookie('refreshToken', refreshToken, {
             httpOnly : true,
@@ -91,7 +91,7 @@ export const authController = {
     forgotPassword : async(req : Request, res : Response) => {
         const parsed = forgotPasswordSchema.parse(req.body);
 
-        await authService.forgotPassword(parsed);
+        await authService.forgotPassword(parsed, req.log);
 
         sendResponse(res, HTTP_STATUS.OK, {
             status : true,
@@ -102,7 +102,7 @@ export const authController = {
     resetPassword : async (req : Request , res : Response) => {
         const parsed = resetPasswordSchema.parse(req.body);
 
-        await authService.resetPassword(parsed);
+        await authService.resetPassword(parsed, req.log);
 
         sendResponse(res, HTTP_STATUS.OK, {
             status : true, 
@@ -119,7 +119,7 @@ export const authController = {
 
         const parsed = logoutSchema.parse(token);
 
-        await authService.logout(parsed);
+        await authService.logout(parsed, req.log);
 
         res.clearCookie('refreshToken', {
                 httpOnly: true,
@@ -136,7 +136,7 @@ export const authController = {
     logoutAll : async(req : Request, res : Response) => {
         // const parsed = logoutAllSchema.parse(req.user!.id);
 
-        await authService.logoutAll(req.user!.id);
+        await authService.logoutAll(req.user!.id, req.log);
 
         res.clearCookie('refreshToken', {
             httpOnly: true,
