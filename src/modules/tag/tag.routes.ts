@@ -5,6 +5,6 @@ import { tagController } from "./tag.controllers";
 
 const router = Router();
 
-router.get("get", authMiddleware, asyncHanlder(tagController.searchTags));
+router.get("/get", authMiddleware, asyncHanlder(tagController.searchTags));
 
 export default router;
