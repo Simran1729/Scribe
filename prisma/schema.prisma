@@ -78,7 +78,7 @@ model Profile {
 
 model Blog {
   id           Int        @id @default(autoincrement())
-  slug         String
+  slug         String     @unique
   userId       Int
   title        String
   plainText    String
@@ -149,11 +149,12 @@ model CommentLike {
 }
 
 model Tag {
-  id        Int        @id @default(autoincrement())
-  name      String     @unique
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  postTags  PostTags[]
+  id         Int        @id @default(autoincrement())
+  name       String     @unique
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  usageCount Int
+  postTags   PostTags[]
 }
 
 model PostTags {
