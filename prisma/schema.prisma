@@ -83,6 +83,8 @@ model Blog {
   title        String
   plainText    String
   enrichedText Json
+  htmlText     String
+  excerpt      String
   status       BlogStatus @default(DRAFT)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -106,6 +108,8 @@ model Comment {
   id     Int @id @default(autoincrement())
   userId Int
   blogId Int
+
+  comment String
 
   blog Blog @relation(fields: [blogId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id])
@@ -153,7 +157,7 @@ model Tag {
   name       String     @unique
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
-  usageCount Int
+  usageCount Int        @default(0)
   postTags   PostTags[]
 }
 
