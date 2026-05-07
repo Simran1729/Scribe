@@ -78,14 +78,16 @@ model Profile {
 
 model Blog {
   id           Int        @id @default(autoincrement())
-  slug         String     @unique
+  slug         String?    @unique
   userId       Int
-  title        String
-  plainText    String
+  title        String     @default("")
+  plainText    String     @default("")
   enrichedText Json
-  htmlText     String
-  excerpt      String
+  htmlText     String     @default("")
+  excerpt      String     @default("")
   status       BlogStatus @default(DRAFT)
+  publishedAt  DateTime?
+  version      Int        @default(1)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   isDeleted    Boolean    @default(false)

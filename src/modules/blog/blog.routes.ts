@@ -1,33 +1,51 @@
 import { Router } from "express";
+import { authMiddleware } from "../../middlewares/auth.middleware";
+import { blogController } from "./blog.controllers";
+import { asyncHandler } from "../../utils/asyncHandler";
 
 const router = Router();
 
-// ✅ CREATE blog (draft)
-// router.post("/", createBlog);
+router.post(
+  "/drafts",
+  authMiddleware,
+  asyncHandler(blogController.createDraft)
+);
 
-// // ✅ GET all blogs (list / feed / filters)
-// router.get("/", getBlogs);
+router.get(
+  "/",
+  authMiddleware,
+  asyncHandler(blogController.listBlogs)
+);
 
-// // ✅ STATIC / ACTION routes (put BEFORE :id)
+router.get(
+  "/drafts/:id",
+  authMiddleware,
+  asyncHandler(blogController.getDraftById)
+);
 
-// // publish
-// router.post("/:id/publish", publishBlog);
+router.patch(
+  "/drafts/:id",
+  authMiddleware,
+  asyncHandler(blogController.autosaveDraft)
+);
 
-// // report
-// router.patch("/:id/block", blockBlog); -- add report or block blog schema
+router.post(
+  "/drafts/:id/publish",
+  authMiddleware,
+  asyncHandler(blogController.publishDraft)
+);
 
-// // slug (VERY IMPORTANT before :id)
-// router.get("/slug/:slug", getBlogBySlug);
+router.post(
+  "/:id/unpublish",
+  authMiddleware,
+  asyncHandler(blogController.unpublish)
+);
 
-// // ✅ DYNAMIC routes (generic ones LAST)
+// Public
+router.get(
+  "/posts/:slug",
+  asyncHandler(blogController.getPublishedPost)
+);
 
-// // update blog
-// router.patch("/:id", updateBlog);
-
-// // delete blog
-// router.delete("/:id", deleteBlog);
-
-// // get blog by id (editor)
-// router.get("/:id", getBlogById);
 
 export default router;

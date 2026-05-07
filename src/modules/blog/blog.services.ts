@@ -3,16 +3,12 @@ import { createBlogDTO } from "./blog.schema";
 
 export const blogService = {
     createBlogService: async (data: createBlogDTO): Promise<void> => {
-        const { userId, slug, title, plainText, enrichedText, htmlText } = data;
+        const { userId, enrichedText } = data;
 
         await prisma.blog.create({
             data: {
                 userId,
-                slug,
-                title,
-                plainText,
                 enrichedText,
-                htmlText,
             },
         });
     },
