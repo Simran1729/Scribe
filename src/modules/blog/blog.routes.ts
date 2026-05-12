@@ -8,19 +8,19 @@ const router = Router();
 router.post(
   "/drafts",
   authMiddleware,
-  asyncHandler(blogController.createDraft)
+  asyncHandler(blogController.createBlog)
+);
+
+router.get(
+  "/drafts/:id",
+  authMiddleware,
+  asyncHandler(blogController. )
 );
 
 router.get(
   "/",
   authMiddleware,
   asyncHandler(blogController.listBlogs)
-);
-
-router.get(
-  "/drafts/:id",
-  authMiddleware,
-  asyncHandler(blogController.getDraftById)
 );
 
 router.patch(

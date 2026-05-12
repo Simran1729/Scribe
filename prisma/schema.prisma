@@ -80,11 +80,11 @@ model Blog {
   id           Int        @id @default(autoincrement())
   slug         String?    @unique
   userId       Int
-  title        String     @default("")
-  plainText    String     @default("")
-  enrichedText Json
-  htmlText     String     @default("")
-  excerpt      String     @default("")
+  title        String?    @default("")
+  plainText    String?    @default("")
+  enrichedText Json?
+  htmlText     String?    @default("")
+  excerpt      String?    @default("")
   status       BlogStatus @default(DRAFT)
   publishedAt  DateTime?
   version      Int        @default(1)
