@@ -21,6 +21,6 @@ app.use((req, res) => {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, "Route not Found");
 })
 
-app.use(errorMiddleware);
+app.use(errorMiddleware)
 
 export default app;
