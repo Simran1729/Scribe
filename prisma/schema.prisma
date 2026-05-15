@@ -88,6 +88,7 @@ model Blog {
   status       BlogStatus @default(DRAFT)
   publishedAt  DateTime?
   version      Int        @default(1)
+  readingTime  Int?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   isDeleted    Boolean    @default(false)

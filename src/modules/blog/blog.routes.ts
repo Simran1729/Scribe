@@ -6,28 +6,28 @@ import { asyncHandler } from "../../utils/asyncHandler";
 const router = Router();
 
 router.post(
-  "/drafts",
+  "/draft",
   authMiddleware,
   asyncHandler(blogController.createBlog)
 );
 
 router.get(
-  "/drafts/:id",
+  "/draft/:id",
   authMiddleware,
-  asyncHandler(blogController. )
-);
-
-router.get(
-  "/",
-  authMiddleware,
-  asyncHandler(blogController.listBlogs)
+  asyncHandler(blogController.getDraftById)
 );
 
 router.patch(
-  "/drafts/:id",
+  "/draft/:id",
   authMiddleware,
-  asyncHandler(blogController.autosaveDraft)
+  asyncHandler(blogController.autoSaveDraft)
 );
+
+router.delete(
+  "/draft/:id",
+  authMiddleware,
+  asyncHandler(blogController.deleteDraft)
+)
 
 router.post(
   "/drafts/:id/publish",
@@ -35,17 +35,24 @@ router.post(
   asyncHandler(blogController.publishDraft)
 );
 
-router.post(
-  "/:id/unpublish",
-  authMiddleware,
-  asyncHandler(blogController.unpublish)
-);
+// router.get(
+//   "/",
+//   authMiddleware,
+//   asyncHandler(blogController.listBlogs)
+// );
 
-// Public
-router.get(
-  "/posts/:slug",
-  asyncHandler(blogController.getPublishedPost)
-);
+
+// router.post(
+//   "/:id/unpublish",
+//   authMiddleware,
+//   asyncHandler(blogController.unpublish)
+// );
+
+// // Public
+// router.get(
+//   "/posts/:slug",
+//   asyncHandler(blogController.getPublishedPost)
+// );
 
 
 export default router;

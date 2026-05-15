@@ -1,6 +1,3 @@
-export const TITTAP_EMPTY_DOC = {type : "doc", content : [] as any[] };
+export const TITTAP_EMPTY_DOC = { type: "doc", content: [] as any[] };
 
-export enum BlogStatus {
-  DRAFT,
-  PUBLISHED
-}
+export const BlogStatus = ["DRAFT", "PUBLISHED"] as const;
