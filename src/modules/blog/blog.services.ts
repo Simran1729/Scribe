@@ -6,7 +6,10 @@ import { logger } from "../../utils/logger";
 import { ApiError } from "../../utils/ApiError";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { Prisma } from "@prisma/client";
-import { version } from "node:os";
+import { jsontoHtml, jsonToText } from "../../lib/tiptap/utils";
+import { JSONContent } from "@tiptap/core";
+import { slugifyBlogTitle } from "../../utils/blogUtils";
+import readingTime from "reading-time";
 
 const serviceLogger = logger.child({ service: "blog" });
 
@@ -14,6 +17,18 @@ function normalizeEditorJson(value: unknown) {
     return value == null ? TITTAP_EMPTY_DOC : value;
 }
 
+function getDraftTitle(doc: any): string {
+    const firstNode = doc?.content?.[0];
+
+    if (!firstNode?.content) {
+        return "Untitled Draft";
+    }
+
+    return firstNode.content
+        .map((item: any) => item.text || "")
+        .join("")
+        .slice(0, 100);
+}
 
 export const blogService = {
     createBlogService: async (data: createBlogDTO, log: Logger = serviceLogger): Promise<void> => {
@@ -37,12 +52,15 @@ export const blogService = {
             where: {
                 id,
                 userId,
-                status: "DRAFT"
+                status: "DRAFT",
+                isDeleted : false,
+                isBlocked : false
             },select: {
                 id: true,
                 userId : true,
                 status: true,
                 enrichedText: true,
+                title : true,
                 version: true,
                 createdAt: true,
                 updatedAt: true
@@ -61,6 +79,8 @@ export const blogService = {
     }> => {
         
         const enrichedTextVal = normalizeEditorJson(enrichedText);
+        const draftTitle = getDraftTitle(enrichedTextVal);
+
 
         const updatedDraft = await prisma.blog.updateMany({
             where: {
@@ -71,6 +91,7 @@ export const blogService = {
             },
             data: {
             enrichedText: enrichedTextVal,
+            title : draftTitle,
             version: {
                 increment: 1
             }
@@ -110,13 +131,25 @@ export const blogService = {
         }
     },
 
-    publishDraft : async (data : publishDraftDTO, log : Logger = serviceLogger) : Promise<void> => {
-        const { id, userId, tags } = data;
+    publishDraftService : async (data : publishDraftDTO, log : Logger = serviceLogger) : Promise<void> => {
+                /* 
+                - , id , userid
+                Get the id and user id to verify if it exists - done
+                First extract the excerpt , Extract the title from it
+                Extract the html from it
+                Extract the slug from it
+                Extract the plaintext from it
+                extract the reading time from the blog
+                Ispublished - true
+                set tags for this blog post
+                */
+        const { id, userId, tags, title, excerpt } = data;
 
         const draftBlog = await prisma.blog.findFirst({
             where : {
                 id,
-                userId
+                userId,
+                status : "DRAFT"
             }
         })
 
@@ -124,7 +157,29 @@ export const blogService = {
             throw new ApiError(HTTP_STATUS.NOT_FOUND, "No blog found with id for this user")
         }
 
-        const enrichedText = draftBlog.enrichedText;
-        const 
-    } 
+        const rawContent = draftBlog.enrichedText;
+
+        if (
+            typeof rawContent !== "object" ||
+            rawContent === null
+        ) {
+            throw new ApiError(
+                HTTP_STATUS.BAD_REQUEST,
+                "Invalid editor content"
+            );
+        }
+
+        const enrichedText = rawContent as JSONContent;
+        const htmlText = jsontoHtml(enrichedText);
+        const plainText = jsonToText(enrichedText);
+        
+        const slug = slugifyBlogTitle(title)
+        const timeToRead = readingTime(plainText);
+
+        // add tags logic here to increment tag count and handle create tag logic where and how
+    },
+
+    // unListDraftService
+
+    // deletePublishedBlogService
 };

@@ -71,17 +71,6 @@ export const blogController = {
     },
 
     publishDraft : async (req: Request, res : Response, next : NextFunction) => {
-        /* 
-        - , id , userid
-        Get the id and user id to verify if it exists
-        First extract the excerpt 
-        Extract the html from it
-        Extract the slug from it
-        Extract the plaintext from it
-        Extract the title from it
-        Ispublished - true
-        set tags for this blog post
-        */
 
         const { id } = req.params;
         const userId = req.user?.id;

@@ -157,7 +157,9 @@ model CommentLike {
 
 model Tag {
   id         Int        @id @default(autoincrement())
-  name       String     @unique
+  name       String    
+  normalized String     @unique
+  slug       String     @unique
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
   usageCount Int        @default(0)

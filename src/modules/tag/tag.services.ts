@@ -5,12 +5,16 @@ import type { Logger } from "pino";
 import { logger } from "../../utils/logger";
 import { cursorPaginate, offsetPaginate } from "../../utils/pagination";
 import type { PaginationMeta } from "../../utils/sendResponse";
+import { normalizeTag, slugifyTag } from "../../utils/tagUtils";
+import { ApiError } from "../../utils/ApiError";
+import { HTTP_STATUS } from "../../constants/httpStatus";
 
 const serviceLogger = logger.child({ service: "tag" });
 
 type TagResponseDTO = {
     id : number,
-    name : string
+    name : string,
+    usageCount : number
 }
 
 
@@ -21,12 +25,14 @@ export const getTags = async (
     const {search, order, cursor, limit, sortBy, mode: requestedMode, page} = query;
     const mode = requestedMode ?? "offset";
 
-    const allowedSortFields = ["createdAt", "name"];
+    const allowedSortFields = ["createdAt", "name", "usageCount"];
     const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : "createdAt";
 
-    const where: Prisma.TagWhereInput | undefined = search ? {
-        name : {
-            contains : search,
+    const normalizedSearch = search ? normalizeTag(search) : undefined;
+
+    const where: Prisma.TagWhereInput | undefined = normalizedSearch ? {
+        normalized : {
+            startsWith : normalizedSearch,
             mode : "insensitive"
         }
     } : undefined;
@@ -47,7 +53,8 @@ export const getTags = async (
             }),
             select : {
                 id : true,
-                name : true
+                name : true,
+                usageCount : true,
             }
         });
 
@@ -71,7 +78,8 @@ export const getTags = async (
             take: limit,
             select : {
                 id : true,
-                name : true
+                name : true,
+                usageCount : true,
             }
         })
     ]);
@@ -83,4 +91,38 @@ export const getTags = async (
         "tags fetched"
     );
     return { data, meta };
+}
+
+export const createTag = async (tag  : string , log : Logger = serviceLogger) : Promise<TagResponseDTO> => {
+    const normalized = normalizeTag(tag);
+    const slug = slugifyTag(tag);
+
+    if(!normalized){
+        throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Invalid Tag");
+    }
+
+    const existing = await prisma.tag.findUnique({
+        where : {
+            normalized
+        }
+    })
+
+    if(existing){
+        return existing
+    }
+
+    const created = await prisma.tag.create({
+        data : {
+            name : tag.trim(),
+            normalized,
+            slug
+        },
+        select : {
+            id : true,
+            name : true,
+            usageCount : true,
+        }
+    })
+
+    return created;
 }

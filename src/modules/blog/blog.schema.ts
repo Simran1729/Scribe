@@ -26,7 +26,9 @@ export const autoSaveDraftSchema = z.object({
 export const publishDraftSchema = z.object({
     id : z.number(),
     userId : z.number(),
-    tags : z.array(z.number())
+    tags : z.array(z.number()),
+    title : z.string().max(50).min(2),
+    excerpt : z.string().max(150).min(2)
 })
 
 export type createBlogDTO = z.infer<typeof blogSchema>;
