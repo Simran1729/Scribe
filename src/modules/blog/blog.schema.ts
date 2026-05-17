@@ -26,9 +26,18 @@ export const autoSaveDraftSchema = z.object({
 export const publishDraftSchema = z.object({
     id : z.number(),
     userId : z.number(),
-    tags : z.array(z.number()),
+    tags : z.array(z.number()).max(5, "Maximum 5 tags allowed"),
     title : z.string().max(50).min(2),
     excerpt : z.string().max(150).min(2)
+})
+
+export const editBlogPostSchema = z.object({
+    id : z.number(),
+    userId : z.number(),
+    enrichedText : z.custom<Prisma.JsonValue>,
+    tags : z.array(z.number()).max(5, "Maximum 5 tags allowed").optional(),
+    title : z.string().max(50).min(2).optional(),
+    excerpt : z.string().max(150).min(2).optional()
 })
 
 export type createBlogDTO = z.infer<typeof blogSchema>;

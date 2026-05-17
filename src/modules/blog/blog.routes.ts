@@ -5,54 +5,38 @@ import { asyncHandler } from "../../utils/asyncHandler";
 
 const router = Router();
 
-router.post(
-  "/draft",
-  authMiddleware,
-  asyncHandler(blogController.createBlog)
-);
+// ** UnPublished/Draft Blog = Draft
+// ** Published Blog = BlogPost
 
-router.get(
-  "/draft/:id",
-  authMiddleware,
-  asyncHandler(blogController.getDraftById)
-);
+// ** Draft Blog Routes **
 
-router.patch(
-  "/draft/:id",
-  authMiddleware,
-  asyncHandler(blogController.autoSaveDraft)
-);
+router.post("/draft", authMiddleware, asyncHandler(blogController.createBlog));
 
-router.delete(
-  "/draft/:id",
-  authMiddleware,
-  asyncHandler(blogController.deleteDraft)
-)
+router.get( "/draft/:id", authMiddleware, asyncHandler(blogController.getDraftById));
 
-router.post(
-  "/drafts/:id/publish",
-  authMiddleware,
-  asyncHandler(blogController.publishDraft)
-);
+router.patch( "/draft/:id", authMiddleware, asyncHandler(blogController.autoSaveDraft));
 
-// router.get(
-//   "/",
-//   authMiddleware,
-//   asyncHandler(blogController.listBlogs)
-// );
+router.delete( "/draft/:id", authMiddleware, asyncHandler(blogController.deleteDraft))
+
+router.post( "/draft/:id/publish", authMiddleware, asyncHandler(blogController.publishDraft));
+
+// ** Published Blog Routes **
+
+router.get("/post/:id/edit", authMiddleware, asyncHandler(blogController.getEditableBlogPost));
+
+router.patch("/post/:id", authMiddleware, asyncHandler(blogController.editBlogPost));
+
+router.post("/post/:id/unlist", authMiddleware, asyncHandler(blogController.unlistBlogPost));
+
+router.delete("/post/:id", authMiddleware, asyncHandler(blogController.deleteBlogPost));
+
+router.post("/post/:id/relist", authMiddleware, asyncHandler(blogController.relistBlogPost));
 
 
-// router.post(
-//   "/:id/unpublish",
-//   authMiddleware,
-//   asyncHandler(blogController.unpublish)
-// );
+// ** Common Routes **
 
-// // Public
-// router.get(
-//   "/posts/:slug",
-//   asyncHandler(blogController.getPublishedPost)
-// );
+router.get("/me/blogs", authMiddleware, asyncHandler(blogController.listMyBlogs));
+
 
 
 export default router;

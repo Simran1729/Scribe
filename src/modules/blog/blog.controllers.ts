@@ -74,16 +74,51 @@ export const blogController = {
 
         const { id } = req.params;
         const userId = req.user?.id;
-        const tags = req.body;
+        const { tags, title, excerpt } = req.body;
 
         const parsedData = publishDraftSchema.parse({
             id : Number(id),
             userId : Number(userId),
-            tags
+            tags,
+            title,
+            excerpt
         })
 
-        await blogService.publishDraft(parsedData, req.log)
-        
+        await blogService.publishDraftService(parsedData, req.log)
+
+        sendResponse(res, HTTP_STATUS.OK, {
+            status : true,
+            message : "Blog published successfully"
+        })
+    },
+
+    getEditableBlogPost : async (req: Request, res : Response) => {
+        const { id } = req.params;
+        const userId = req.user?.id;
+
+        // const 
+    },
+
+    editBlogPost : async (req : Request, res : Response) => {
+        const { id } = req.params;
+
+        // const 
+    },
+
+    unlistBlogPost : async(req : Request, res : Response) => {
+
+    },
+
+    deleteBlogPost : async (req : Request, res : Response) => {
+
+    },
+
+    relistBlogPost : async (req : Request, res : Response) => {
+
+    },
+
+    listMyBlogs : async (req : Request, res : Response) => {
+
     }
         
 }
