@@ -1,6 +1,6 @@
 import { TITTAP_EMPTY_DOC } from "../../constants/blog.constants";
 import { prisma } from "../../lib/prisma";
-import { createBlogDTO, DraftBlogDTO, publishDraftDTO } from "./blog.schema";
+import { createBlogDTO, DraftBlogDTO, getBlogPostDTO, publishDraftDTO } from "./blog.schema";
 import { Logger } from "pino";
 import { logger } from "../../utils/logger";
 import { ApiError } from "../../utils/ApiError";
@@ -44,6 +44,9 @@ async function generateUniqueSlug(title: string, blogId: number): Promise<string
 }
 
 export const blogService = {
+
+    // ** Draft Blog Service ** 
+
     createBlogService: async (data: createBlogDTO, log: Logger = serviceLogger): Promise<void> => {
         const { userId, enrichedText } = data;
 
@@ -239,4 +242,31 @@ export const blogService = {
             "Blog published successfully"
         );
     },
+
+
+    // ** Blog Post Services **
+
+    getBlogPost : async (id : number, userId : number, log : Logger = serviceLogger) : Promise<getBlogPostDTO> => {
+        const blogPost = await prisma.blog.findFirst({
+            where : {
+                id,
+                userId,
+                status : "PUBLISHED"
+            }, select : {
+                id : true,
+                userId : true,
+                enrichedText : true,
+                version : true,
+                createdAt : true,
+                updatedAt : true,
+                publishedAt : true
+            }
+        })
+
+        if(!blogPost){
+            throw new ApiError(HTTP_STATUS.NOT_FOUND, "No published blog found with this id for this user")
+        }
+
+        
+    }
 };

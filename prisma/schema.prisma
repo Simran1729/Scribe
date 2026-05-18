@@ -21,6 +21,7 @@ enum Role {
 enum BlogStatus {
   DRAFT
   PUBLISHED
+  UNLISTED
 }
 
 model User {

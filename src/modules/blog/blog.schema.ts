@@ -40,6 +40,14 @@ export const editBlogPostSchema = z.object({
     excerpt : z.string().max(150).min(2).optional()
 })
 
+export const getBlogPostSchema = DraftBlogSchema.extend({
+    title : z.string(),
+    publishedAt : z.date(),
+    tags : z.array(z.number()).optional(),
+    excerpt : z.string().max(150).min(2).optional()
+})
+
 export type createBlogDTO = z.infer<typeof blogSchema>;
 export type DraftBlogDTO = z.infer<typeof DraftBlogSchema>;
 export type publishDraftDTO = z.infer<typeof publishDraftSchema>;
+export type getBlogPostDTO = z.infer<typeof getBlogPostSchema>;

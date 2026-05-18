@@ -96,7 +96,17 @@ export const blogController = {
         const { id } = req.params;
         const userId = req.user?.id;
 
-        // const 
+        if(!id){
+            throw new ApiError(HTTP_STATUS.BAD_REQUEST, "No id found in the request")
+        }
+
+        const data = await blogService.getBlogPost(Number(id), Number(userId));
+
+        sendResponse(res, HTTP_STATUS.OK, {
+            status : true,
+            message : "Blog fetched successfully",
+            data
+        })
     },
 
     editBlogPost : async (req : Request, res : Response) => {
