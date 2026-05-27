@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { ApiError } from "../utils/ApiError";
 import { HTTP_STATUS } from "../constants/httpStatus";
-import { TokenPayloadSchema, verifyToken } from "../utils/authUtils";
+import { verifyToken } from "../modules/auth/auth.utils";
 
 export const authMiddleware = (
   req: Request,

@@ -2,7 +2,7 @@ import { addDays, addMinutes } from "date-fns";
 import { HTTP_STATUS, TOKEN_EXPIRY, USER_ROLES } from "../../constants/httpStatus";
 import { prisma } from "../../lib/prisma";
 import { ApiError } from "../../utils/ApiError";
-import { comparePasswords, generateOTP, generateToken, hashPassword, verifyToken } from "../../utils/authUtils";
+import { comparePasswords, generateOTP, generateToken, hashPassword, verifyToken } from "./auth.utils";
 import { userResponseSchema } from "./auth.schema";
 import { forgotPasswordDTO, LoginDTO, logoutAllDTO, logoutDTO, refreshTokenDTO, resetPasswordDTO, sendOtpDTO, SignUpDTO, userResponseDTO, verifyOtpDTO } from "./auth.types";
 import { sendEmail } from "../../utils/sendMail";

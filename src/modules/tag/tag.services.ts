@@ -5,7 +5,7 @@ import type { Logger } from "pino";
 import { logger } from "../../utils/logger";
 import { cursorPaginate, offsetPaginate } from "../../utils/pagination";
 import type { PaginationMeta } from "../../utils/sendResponse";
-import { normalizeTag, slugifyTag } from "../../utils/tagUtils";
+import { normalizeTag, slugifyTag } from "./tag.utils";
 import { ApiError } from "../../utils/ApiError";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 
@@ -21,7 +21,7 @@ type TagResponseDTO = {
 export const getTags = async (
     query : queryRes,
     log : Logger = serviceLogger
-) : Promise<{ data: TagResponseDTO[]; meta: PaginationMeta }> => {
+) : Promise<{ data: TagResponseDTO[], meta: PaginationMeta }> => {
     const {search, order, cursor, limit, sortBy, mode: requestedMode, page} = query;
     const mode = requestedMode ?? "offset";
 

@@ -2,7 +2,7 @@ import { HTTP_STATUS } from "../../constants/httpStatus";
 import { ROLE_TRANSITIONS } from "../../constants/user.constants";
 import { prisma } from "../../lib/prisma";
 import { ApiError } from "../../utils/ApiError";
-import { comparePasswords, hashPassword } from "../../utils/authUtils";
+import { comparePasswords, hashPassword } from "../../modules/auth/auth.utils";
 import { blockUserDTO, changePasswordDTO, deactivateUserDTO, promoteDemoteUserDTO, updateProfileDTO } from "./user.types";
 import type { Logger } from "pino";
 import { logger } from "../../utils/logger";

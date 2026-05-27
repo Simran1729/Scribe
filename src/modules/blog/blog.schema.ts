@@ -24,30 +24,35 @@ export const autoSaveDraftSchema = z.object({
 })
 
 export const publishDraftSchema = z.object({
-    id : z.number(),
-    userId : z.number(),
-    tags : z.array(z.number()).max(5, "Maximum 5 tags allowed"),
-    title : z.string().max(50).min(2),
-    excerpt : z.string().max(150).min(2)
-})
-
-export const editBlogPostSchema = z.object({
-    id : z.number(),
-    userId : z.number(),
-    enrichedText : z.custom<Prisma.JsonValue>,
-    tags : z.array(z.number()).max(5, "Maximum 5 tags allowed").optional(),
-    title : z.string().max(50).min(2).optional(),
-    excerpt : z.string().max(150).min(2).optional()
+    id: z.number(),
+    userId: z.number(),
+    tags: z.array(z.number()).max(5, "Maximum 5 tags allowed"),
+    title: z.string().max(50).min(2),
+    excerpt: z.string().max(150).min(2)
 })
 
 export const getBlogPostSchema = DraftBlogSchema.extend({
-    title : z.string(),
-    publishedAt : z.date(),
-    tags : z.array(z.number()).optional(),
-    excerpt : z.string().max(150).min(2).optional()
+    title: z.string(),
+    publishedAt: z.date(),
+    tags: z.array(z.object({
+        id: z.number(),
+        name: z.string()
+    })).optional(),
+    excerpt: z.string().max(150).min(2).optional()
 })
+
+export const editBlogPostSchema = z.object({
+    id: z.number(),
+    userId: z.number(),
+    enrichedText: z.custom<Prisma.JsonValue>,
+    tags: z.array(z.number()).min(1, "At least 1 tag required").max(5, "Maximum 5 tags allowed").optional(),    
+    title: z.string().max(50).min(2).optional(),
+    excerpt: z.string().max(150).min(2).optional()
+})
+
 
 export type createBlogDTO = z.infer<typeof blogSchema>;
 export type DraftBlogDTO = z.infer<typeof DraftBlogSchema>;
 export type publishDraftDTO = z.infer<typeof publishDraftSchema>;
 export type getBlogPostDTO = z.infer<typeof getBlogPostSchema>;
+export type editBlogPostSchema = z.infer<typeof editBlogPostSchema>;

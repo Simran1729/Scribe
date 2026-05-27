@@ -1,9 +1,11 @@
 import { NextFunction, Request, Response } from "express";
-import { autoSaveDraftSchema, blogSchema, publishDraftSchema } from "./blog.schema";
+import { autoSaveDraftSchema, blogSchema, editBlogPostSchema, publishDraftSchema } from "./blog.schema";
 import { blogService } from "./blog.services";
 import { sendResponse } from "../../utils/sendResponse";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { ApiError } from "../../utils/ApiError";
+import { queryParser } from "../../utils/queryParser";
+import { blogQueryParser } from "./blog.utils";
 
 export const blogController = {
     createBlog: async (req: Request, res: Response, next: NextFunction) => {
@@ -62,7 +64,7 @@ export const blogController = {
             throw new ApiError(HTTP_STATUS.BAD_REQUEST, "No draftId found")
         }
 
-        await blogService.deleteDraftService(Number(id), Number(userId)); 
+        await blogService.deleteDraftService(Number(id), Number(userId), req.log); 
 
         sendResponse(res, HTTP_STATUS.OK, {
             status : true,
@@ -100,7 +102,7 @@ export const blogController = {
             throw new ApiError(HTTP_STATUS.BAD_REQUEST, "No id found in the request")
         }
 
-        const data = await blogService.getBlogPost(Number(id), Number(userId));
+        const data = await blogService.getBlogPost(Number(id), Number(userId), req.log);
 
         sendResponse(res, HTTP_STATUS.OK, {
             status : true,
@@ -110,25 +112,97 @@ export const blogController = {
     },
 
     editBlogPost : async (req : Request, res : Response) => {
+        // Edits and Publishes Blog Post
         const { id } = req.params;
 
-        // const 
+        const userId = req.user?.id;
+
+        if(!id){
+            throw new ApiError(HTTP_STATUS.BAD_REQUEST, "No id found in the request")
+        }
+
+       const parsedData = editBlogPostSchema.parse({
+        id : Number(id),
+        userId : Number(userId),
+        ...req.body
+       })
+
+       await blogService.editAndPublishBlogPostService(parsedData, req.log);
+
+       sendResponse(res, HTTP_STATUS.OK, {
+        status : true,
+        message : "Blog Post Edited and Published"
+       })
+
     },
 
     unlistBlogPost : async(req : Request, res : Response) => {
+        const { id } = req.params;
+        const userId = req.user?.id;
 
-    },
+        if(!id){
+            throw new ApiError(HTTP_STATUS.BAD_REQUEST, "No id found in the request")
+        }
+        
+        await blogService.unlistBlogPostService(Number(id), Number(userId), req.log);
 
-    deleteBlogPost : async (req : Request, res : Response) => {
-
+        sendResponse(res, HTTP_STATUS.OK, {
+            status : true,
+            message : "Blog Post unlisted successfully"
+        })
     },
 
     relistBlogPost : async (req : Request, res : Response) => {
+        const { id } = req.params;
+        const userId = req.user?.id;
 
+        if(!id){
+            throw new ApiError(HTTP_STATUS.BAD_REQUEST, "No id found in the request")
+        }
+
+        await blogService.relistBlogPostService(Number(id), Number(userId), req.log);
+        
+        sendResponse(res, HTTP_STATUS.OK, {
+            status : true,
+            message : "Blog Relisted Successfully"
+        })
+    },
+
+    deleteBlogPost : async (req : Request, res : Response) => {
+        const { id } = req.params;
+        const userId = req.user?.id;
+
+        if(!id){
+            throw new ApiError(HTTP_STATUS.BAD_REQUEST, "No id found in the request")
+        }
+
+        await blogService.deleteBlogPostService(Number(id), Number(userId), req.log);
+
+        sendResponse(res, HTTP_STATUS.OK, {
+            status : true,
+            message : "Blog deleted succesfully"
+        })
+
+        
     },
 
     listMyBlogs : async (req : Request, res : Response) => {
+        const userId = req.user?.id;
 
-    }
+        const query = blogQueryParser(req);
+        
+        const { data, meta } = await blogService.listMyBlogsService(query , Number(userId), req.log);
+
+        sendResponse(res, HTTP_STATUS.OK, {
+            status : true,
+            message : "All blogs fetcehd successfully",
+            data,
+            meta
+        })
+
+
+    },
+
+
         
 }

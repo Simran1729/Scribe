@@ -95,7 +95,13 @@ model Blog {
   isDeleted    Boolean    @default(false)
   isBlocked    Boolean    @default(false)
 
-  deletedAt DateTime?
+  blockedAt    DateTime?
+  blockReason  String?
+  blockedBy    Int?
+
+  unlistedAt   DateTime?
+
+  deletedAt    DateTime?
 
   user User @relation(fields: [userId], references: [id])
 

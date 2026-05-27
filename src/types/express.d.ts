@@ -1,4 +1,4 @@
-import { TokenPayload } from "../utils/authUtils";
+import { TokenPayload } from "../modules/auth/auth.utils";
 import type { Logger } from "pino";
 
 declare global {

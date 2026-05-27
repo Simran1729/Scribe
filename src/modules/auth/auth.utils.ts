@@ -1,8 +1,8 @@
 import bcrypt from "bcrypt";
 import jwt, {SignOptions, Secret} from "jsonwebtoken";
-import { JWT_KEY } from "../config/env";
+import { JWT_KEY } from "../../config/env";
 import {z} from "zod";
-import { TOKEN_EXPIRY, USER_ROLES } from "../constants/httpStatus";
+import { TOKEN_EXPIRY, USER_ROLES } from "../../constants/httpStatus";
 import otpGenerator from "otp-generator";
 import { Request } from "express";
 

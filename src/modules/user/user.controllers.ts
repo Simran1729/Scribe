@@ -3,7 +3,7 @@ import { blockUserSchema, changePasswordSchema, deactivateUserSchema, promoteDem
 import { userService } from "./user.services";
 import { sendResponse } from "../../utils/sendResponse";
 import { HTTP_STATUS } from "../../constants/httpStatus";
-import { validateRole } from "../../utils/authUtils";
+import { validateRole } from "../../modules/auth/auth.utils";
 import { ApiError } from "../../utils/ApiError";
 
 
