@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { autoSaveDraftSchema, blogSchema, editBlogPostSchema, publishDraftSchema } from "./blog.schema";
-import { blogService } from "./blog.services";
+import { blogService } from "./blog.author.services";
 import { sendResponse } from "../../utils/sendResponse";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { ApiError } from "../../utils/ApiError";

@@ -505,7 +505,7 @@ export const blogService = {
     },
 
     relistBlogPostService : async(id : number, userId : number, log : Logger = serviceLogger) => {
-        log.info({ blogId: id, userId }, "Blog relisted successfully")
+        log.info({ blogId: id, userId }, "relisting blog post")
 
         const unlistedBlogPost = await prisma.blog.findFirst({
             where : {
@@ -566,6 +566,8 @@ export const blogService = {
                 }
             })
         ]);
+
+        log.info({blogId : id, userId}, "Blog deleted successfully")
 
     },
 
