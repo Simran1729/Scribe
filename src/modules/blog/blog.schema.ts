@@ -50,7 +50,14 @@ export const editBlogPostSchema = z.object({
     excerpt: z.string().max(150).min(2).optional()
 })
 
+export const blockBlogSchema = z.object({
+    id : z.number(),
+    userId : z.number(),
+    blockReason : z.string().min(5).max(100)
+})
 
+
+export type blockBlogDTO = z.infer<typeof blockBlogSchema>;
 export type createBlogDTO = z.infer<typeof blogSchema>;
 export type DraftBlogDTO = z.infer<typeof DraftBlogSchema>;
 export type publishDraftDTO = z.infer<typeof publishDraftSchema>;

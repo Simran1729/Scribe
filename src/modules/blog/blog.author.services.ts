@@ -14,7 +14,7 @@ import { queryRes } from "../../utils/queryParser";
 import { PaginationMeta } from "../../utils/sendResponse";
 import { offsetPaginate } from "../../utils/pagination";
 
-const serviceLogger = logger.child({ service: "blog" });
+const serviceLogger = logger.child({ service: "author blog" });
 
 function normalizeEditorJson(value: unknown) {
     return value == null ? TITTAP_EMPTY_DOC : value;
