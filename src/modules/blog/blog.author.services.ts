@@ -1,7 +1,7 @@
 import { TITTAP_EMPTY_DOC } from "../../constants/blog.constants";
 import { prisma } from "../../lib/prisma";
-import { createBlogDTO, DraftBlogDTO, editBlogPostSchema, getBlogPostDTO, publishDraftDTO } from "./blog.schema";
-import { Logger } from "pino";
+import { createBlogDTO, DraftBlogDTO, editBlogPostDTO, getBlogPostDTO, publishDraftDTO } from "./blog.schema";
+import type { Logger } from "pino";
 import { logger } from "../../utils/logger";
 import { ApiError } from "../../utils/ApiError";
 import { HTTP_STATUS } from "../../constants/httpStatus";
@@ -336,7 +336,7 @@ export const blogService = {
         return formattedBlog;
     },
 
-    editAndPublishBlogPostService : async (data : editBlogPostSchema , log : Logger = serviceLogger) => {
+    editAndPublishBlogPostService : async (data : editBlogPostDTO , log : Logger = serviceLogger) => {
         const { id, userId, title, excerpt, enrichedText, tags}  = data;
 
         const publishedBlogPost = await prisma.blog.findFirst({

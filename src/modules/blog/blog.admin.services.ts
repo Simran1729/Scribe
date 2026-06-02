@@ -1,4 +1,4 @@
-import { Logger } from "pino";
+import type { Logger } from "pino";
 import { blockBlogDTO } from "./blog.schema";
 import { logger } from "../../utils/logger";
 import { prisma } from "../../lib/prisma";

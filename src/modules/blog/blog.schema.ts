@@ -56,10 +56,22 @@ export const blockBlogSchema = z.object({
     blockReason : z.string().min(5).max(100)
 })
 
+export const publicBlogPostSchema = z.object({
+    id : z.number(),
+    title : z.string(),
+    excerpt : z.string(),
+    htmlText : z.string(),
+    createdAt : z.date(),
+    publishedAt : z.date(),    
+})
+
+export const publicBlogPostListSchema = z.array(publicBlogPostSchema);
 
 export type blockBlogDTO = z.infer<typeof blockBlogSchema>;
 export type createBlogDTO = z.infer<typeof blogSchema>;
 export type DraftBlogDTO = z.infer<typeof DraftBlogSchema>;
 export type publishDraftDTO = z.infer<typeof publishDraftSchema>;
 export type getBlogPostDTO = z.infer<typeof getBlogPostSchema>;
-export type editBlogPostSchema = z.infer<typeof editBlogPostSchema>;
+export type editBlogPostDTO = z.infer<typeof editBlogPostSchema>;
+export type publicBlogPostDTO = z.infer<typeof publicBlogPostSchema>;
+export type publicBlogPostListDTO = z.infer<typeof publicBlogPostListSchema>;

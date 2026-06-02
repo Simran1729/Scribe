@@ -4,7 +4,6 @@ import { blogService } from "./blog.author.services";
 import { sendResponse } from "../../utils/sendResponse";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { ApiError } from "../../utils/ApiError";
-import { queryParser } from "../../utils/queryParser";
 import { blogQueryParser } from "./blog.utils";
 
 export const blogController = {
