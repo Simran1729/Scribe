@@ -27,6 +27,7 @@ enum BlogStatus {
 model User {
   id              Int     @id @default(autoincrement())
   email           String  @unique
+  username        String  @unique
   name            String
   password        String
   isActive        Boolean @default(true)
@@ -102,6 +103,7 @@ model Blog {
   unlistedAt   DateTime?
 
   deletedAt    DateTime?
+  viewCount    Int        @default(1)
 
   user User @relation(fields: [userId], references: [id])
 
@@ -121,6 +123,9 @@ model Comment {
 
   comment String
 
+  isEdited Boolean @default(false)
+  isDeleted Boolean @default(false)
+
   blog Blog @relation(fields: [blogId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id])
 
@@ -136,6 +141,7 @@ model Comment {
   @@index([userId])
   @@index([blogId])
   @@index([parentId])
+  @@index([createdAt])
 }
 
 model BlogLike {

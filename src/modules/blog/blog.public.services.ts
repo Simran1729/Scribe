@@ -4,6 +4,7 @@ import { prisma } from "../../lib/prisma"
 import { ApiError } from "../../utils/ApiError"
 import { HTTP_STATUS } from "../../constants/httpStatus"
 import { publicBlogPostDTO, publicBlogPostListDTO, publicBlogPostListSchema, publicBlogPostSchema } from "./blog.schema"
+import { queryRes } from "../../utils/queryParser"
 
 const serviceLogger = logger.child({serivce : "public blog"}) 
 
@@ -66,7 +67,9 @@ export const publicBlogService = {
         return parsedBlogPost;
     },
 
-    getBlogsByUserService : async (id : number, log : Logger = serviceLogger) : Promise<publicBlogPostListDTO> => {
+    getBlogsByUserService : async (id : number, query : queryRes , log : Logger = serviceLogger  ) : Promise<publicBlogPostListDTO> => {
+        const {mode , } = query
+        // **TODO : query is wip
         const user = await prisma.user.findFirst({
             where : {
                 id,
@@ -93,7 +96,6 @@ export const publicBlogService = {
                     id : true,
                     title : true,
                     excerpt : true,
-                    htmlText : true,
                     createdAt : true,
                     publishedAt : true,                
             }
@@ -103,7 +105,7 @@ export const publicBlogService = {
     },
 
     getFeedService : async () => {
-
+        // ** TODO : to be implemented after interaction layer
     }
 
 }

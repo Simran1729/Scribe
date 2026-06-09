@@ -3,6 +3,7 @@ import { ApiError } from "../../utils/ApiError";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { publicBlogService } from "./blog.public.services";
 import { sendResponse } from "../../utils/sendResponse";
+import { queryParser } from "../../utils/queryParser";
 
 export const blogPublicController = {
     getBlogById : async (req : Request, res : Response) => {
@@ -38,12 +39,13 @@ export const blogPublicController = {
 
     getBlogsByUser : async (req : Request, res : Response) => {
         const { userId } = req.params;
+        const query = queryParser(req);
 
         if(!userId){
             throw new ApiError(HTTP_STATUS.BAD_REQUEST, "No userid found in the request")
         }
 
-        const data = await publicBlogService.getBlogsByUserService(Number(userId), req.log)
+        const data = await publicBlogService.getBlogsByUserService(Number(userId), query , req.log)
 
         sendResponse(res, HTTP_STATUS.OK, {
             status : true,
