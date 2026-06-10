@@ -24,6 +24,14 @@ enum BlogStatus {
   UNLISTED
 }
 
+enum ActivityType {
+  VIEW
+  LIKE
+  COMMENT
+  BOOKMARK
+  SHARE
+}
+
 model User {
   id              Int     @id @default(autoincrement())
   email           String  @unique
@@ -49,6 +57,7 @@ model User {
   tokens              Token[]
   emailOTPs           EmailOTP[]
   passwordResetTokens PasswordResetToken[]
+  userActivities      UserActivity[]
 }
 
 model Token {
@@ -110,6 +119,8 @@ model Blog {
   comments Comment[]
   likes    BlogLike[]
   postTags PostTags[]
+  userActivities      UserActivity[]
+
 
   @@index([userId])
   @@index([status])
@@ -214,3 +225,24 @@ model EmailOTP {
 
   @@index([userId])
 }
+
+model UserActivity {
+  id          Int          @id @default(autoincrement())
+  userId      Int
+  blogId      Int
+  type        ActivityType
+  readTime    Int? 
+  scrollDepth Int?   
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blog        Blog         @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, blogId, type])  
+  @@index([userId, type])           
+  @@index([blogId, type])           
+  @@index([userId, createdAt]) 
+}
+
+
