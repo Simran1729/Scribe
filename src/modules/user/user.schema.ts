@@ -2,6 +2,7 @@ import {z} from "zod";
 import { VALID_ACTIONS } from "../../constants/user.constants";
 
 export const updateProfileSchema = z.object({
+    username : z.string().min(3).max(20).optional(),
     interests : z.string().optional(),
     about : z.string().optional(),
     occupation : z.string().optional()
@@ -28,4 +29,10 @@ export const blockUserSchema = z.object({
     type : z.boolean()
 })
 
+export const usernameQuerySchema = z.object({
+    username: z
+        .string("Username is required" )
+        .min(1, "Username cannot be empty")
+        .trim()
+})
 export const deactivateUserSchema = blockUserSchema;

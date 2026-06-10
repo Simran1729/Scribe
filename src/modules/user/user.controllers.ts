@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import { blockUserSchema, changePasswordSchema, deactivateUserSchema, promoteDemoteUserSchema, updateProfileSchema } from "./user.schema";
+import { blockUserSchema, changePasswordSchema, deactivateUserSchema, promoteDemoteUserSchema, updateProfileSchema, usernameQuerySchema } from "./user.schema";
 import { userService } from "./user.services";
 import { sendResponse } from "../../utils/sendResponse";
 import { HTTP_STATUS } from "../../constants/httpStatus";
-import { validateRole } from "../../modules/auth/auth.utils";
+import { isValidUsername, validateRole } from "../../modules/auth/auth.utils";
 import { ApiError } from "../../utils/ApiError";
 
 
@@ -19,6 +19,24 @@ export const userController = {
         })
         
     }, 
+
+    checkUsername: async (req: Request, res: Response) => {
+        const parsed = usernameQuerySchema.parse(req.query)
+
+        const { username } = parsed
+        const currentUserId = req.user!.id
+
+        const result = await userService.checkUsernameService(username, currentUserId, req.log);
+
+        return sendResponse(res, HTTP_STATUS.OK, {
+            status : true,
+            message: result.message,
+            data   : {
+                available  : result.available,
+                suggestions: result.suggestions
+            }
+        })
+    },
 
     changePassword : async (req : Request, res : Response) => {
         const parsed = changePasswordSchema.parse(req.body);

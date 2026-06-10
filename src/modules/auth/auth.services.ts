@@ -2,63 +2,106 @@ import { addDays, addMinutes } from "date-fns";
 import { HTTP_STATUS, TOKEN_EXPIRY, USER_ROLES } from "../../constants/httpStatus";
 import { prisma } from "../../lib/prisma";
 import { ApiError } from "../../utils/ApiError";
-import { comparePasswords, generateOTP, generateToken, hashPassword, verifyToken } from "./auth.utils";
+import { comparePasswords, generateOTP, generateToken, generateUniqueUsername, hashPassword, verifyToken } from "./auth.utils";
 import { userResponseSchema } from "./auth.schema";
 import { forgotPasswordDTO, LoginDTO, logoutAllDTO, logoutDTO, refreshTokenDTO, resetPasswordDTO, sendOtpDTO, SignUpDTO, userResponseDTO, verifyOtpDTO } from "./auth.types";
 import { sendEmail } from "../../utils/sendMail";
 import { otpTemplate, passwordResetTemplate } from "../../utils/emailTemplates";
 import type { Logger } from "pino";
 import { logger } from "../../utils/logger";
+import { Prisma } from "@prisma/client";
 
 const serviceLogger = logger.child({ service: "auth" });
 
 export const authService  = {
-        createUser : async(data : SignUpDTO, log : Logger = serviceLogger) : Promise<void> => {
-        const existingUser = await prisma.user.findUnique({
-            where : {
-                email : data.email
+    createUser: async (data: SignUpDTO, log: Logger = serviceLogger): Promise<void> => {
+
+    const existingUser = await prisma.user.findUnique({
+        where : { email: data.email },
+        select: { id: true } 
+    })
+
+    if (existingUser) {
+        throw new ApiError(HTTP_STATUS.BAD_REQUEST, "User with this email already exists")
+    }
+
+    const [hashedPassword, username] = await Promise.all([
+        hashPassword(data.password),
+        generateUniqueUsername(data.name)
+    ])
+
+    const MAX_RETRIES     = 3
+    let   attempt         = 0
+    let   currentUsername = username
+    let   otpToSend       : string | undefined
+    let   createdUserId   : number | undefined
+
+    while (attempt < MAX_RETRIES) {
+        try {
+
+        await prisma.$transaction(async (tx) => {
+            const user = await tx.user.create({
+            data: {
+                name    : data.name,
+                email   : data.email,
+                username: currentUsername,
+                password: hashedPassword,
+                role    : USER_ROLES.USER,
+                profile : { create: {} }
             }
+            })
+
+            createdUserId = user.id
+
+            const otp = generateOTP()
+            otpToSend   = otp
+
+            await tx.emailOTP.create({
+            data: {
+                otp      : otp,
+                userId   : user.id,
+                expiresAt: addMinutes(new Date(), 5)
+            }
+            })
         })
 
-        if(existingUser){
+        await sendEmail({
+            to     : data.email,
+            subject: "OTP from Scribe",
+            html   : otpTemplate(otpToSend!)
+        }).catch((err) => {
+            log.error({ userId: createdUserId, err }, "failed to send OTP email after signup")
+        })
+
+        log.info({ userId: createdUserId, username: currentUsername }, "user created")
+        return
+
+        } catch (err) {
+        if (
+            err instanceof Prisma.PrismaClientKnownRequestError &&
+            err.code === "P2002"
+        ) {
+            const target = (err.meta?.target as string[]) ?? []
+
+            if (target.includes("username")) {
+            attempt++
+            log.warn({ attempt, username: currentUsername }, "username collision, retrying")
+            currentUsername = await generateUniqueUsername(data.name).catch(() => {
+                throw new ApiError(HTTP_STATUS.INTERNAL_SERVER_ERROR, "Failed to generate username")
+            })
+            continue
+            }
+
+            if (target.includes("email")) {
             throw new ApiError(HTTP_STATUS.BAD_REQUEST, "User with this email already exists")
+            }
         }
 
-        const hashedPassword = await hashPassword(data.password);
-        let createdUserId: number | undefined;
-        await prisma.$transaction(async (tx) => {
-                const user = await tx.user.create({
-                data : {
-                        name : data.name,
-                        email : data.email,
-                        password : hashedPassword,
-                        role : USER_ROLES.USER,
-                        profile : {
-                            create : {} 
-                        }, 
-                    }
-                })
+        throw err
+        }
+    }
 
-                createdUserId = user.id;
-
-                const otp = generateOTP();
-                await tx.emailOTP.create({
-                    data : {
-                        otp : otp,
-                        userId : user.id,
-                        expiresAt : addMinutes(new Date(), 5)
-                    }
-                })
-
-                await sendEmail({
-                    to : user.email,
-                    subject : "OTP from Scribe",
-                    html : otpTemplate(otp) 
-                })
-        })
-
-        log.info({ userId: createdUserId }, "user created");
-
+    throw new ApiError(HTTP_STATUS.INTERNAL_SERVER_ERROR, "Failed to create account, please try again")
     },
 
     loginUser : async(data : LoginDTO, log : Logger = serviceLogger) : Promise<{

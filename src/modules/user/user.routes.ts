@@ -8,7 +8,7 @@ import { USER_ROLES } from "../../constants/httpStatus";
 const router = Router();
 
 router.post('/update-profile', authMiddleware, asyncHandler(userController.updateProfile));
-router.get('/get-username', ) // gets realtime unique username and checks uniqueness for user typing username
+router.get  ('/check-username',  authMiddleware, asyncHandler(userController.checkUsername))
 router.post('/change-password', authMiddleware, asyncHandler(userController.changePassword));
 router.post('/deactivate-account', authMiddleware, asyncHandler(userController.deactivateUser));
 
