@@ -38,19 +38,20 @@ export const blogPublicController = {
     },
 
     getBlogsByUser : async (req : Request, res : Response) => {
-        const { userId } = req.params;
+        const { username } = req.params;
         const query = queryParser(req);
 
-        if(!userId){
-            throw new ApiError(HTTP_STATUS.BAD_REQUEST, "No userid found in the request")
+        if(!username){
+            throw new ApiError(HTTP_STATUS.BAD_REQUEST, "No username found in the request")
         }
 
-        const data = await publicBlogService.getBlogsByUserService(Number(userId), query , req.log)
+        const { data, meta } = await publicBlogService.getBlogsByUserService(String(username), query , req.log)
 
         sendResponse(res, HTTP_STATUS.OK, {
             status : true,
             message : "Blog Posts fetched successfully",
-            data
+            data,
+            meta
         })
     },
 

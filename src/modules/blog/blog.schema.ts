@@ -65,7 +65,11 @@ export const publicBlogPostSchema = z.object({
     publishedAt : z.date(),    
 })
 
-export const publicBlogPostListSchema = z.array(publicBlogPostSchema);
+export const publicBlogPostListItemSchema = publicBlogPostSchema.omit({
+    htmlText : true
+});
+
+export const publicBlogPostListSchema = z.array(publicBlogPostListItemSchema);
 
 export type blockBlogDTO = z.infer<typeof blockBlogSchema>;
 export type createBlogDTO = z.infer<typeof blogSchema>;

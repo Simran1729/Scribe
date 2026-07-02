@@ -5,6 +5,9 @@ import { ApiError } from "../../utils/ApiError"
 import { HTTP_STATUS } from "../../constants/httpStatus"
 import { publicBlogPostDTO, publicBlogPostListDTO, publicBlogPostListSchema, publicBlogPostSchema } from "./blog.schema"
 import { queryRes } from "../../utils/queryParser"
+import { cursorPaginate } from "../../utils/pagination"
+import type { PaginationMeta } from "../../utils/sendResponse"
+import type { Prisma } from "@prisma/client"
 
 const serviceLogger = logger.child({serivce : "public blog"}) 
 
@@ -17,7 +20,7 @@ export const publicBlogService = {
                 status : {
                     not : "DRAFT"
                 },
-                // isBlocked : false, not sure for this , if it should be able to fetch blocked blog posts or not
+                isBlocked : false,
                 isDeleted : false
             }, select : {
                 id : true,
@@ -67,32 +70,56 @@ export const publicBlogService = {
         return parsedBlogPost;
     },
 
-    getBlogsByUserService : async (id : number, query : queryRes , log : Logger = serviceLogger  ) : Promise<publicBlogPostListDTO> => {
-        const {mode , } = query
-        // **TODO : query is wip
+    getBlogsByUserService : async (username : string, query : queryRes , log : Logger = serviceLogger  ) : Promise<{data : publicBlogPostListDTO, meta : PaginationMeta}> => {
+        const {search, limit, cursor, order, sortBy } = query
         const user = await prisma.user.findFirst({
             where : {
-                id,
+                username,
                 isBlocked : false,
                 isActive : true,
                 isEmailVerified : true,
                 role : {
                     not : "ADMIN"
                 }
-            }
+            },
+            select : {id : true}
         })
 
         if(!user){
-            throw new ApiError(HTTP_STATUS.NOT_FOUND, "No active user found with this id")
+            throw new ApiError(HTTP_STATUS.NOT_FOUND, "No active user found with this username")
         }
 
-        const blogPosts = await prisma.blog.findMany({
-            where : {
-                userId : id,
+        const allowedSortFields = ["createdAt", "publishedAt", "readingTime", "viewCount"];
+        const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : "createdAt";
+        const normalizedSearch = search?.trim();
+
+        const where : Prisma.BlogWhereInput = {
+                userId : user.id,
                 status : "PUBLISHED",
                 isBlocked : false,
-                isDeleted : false
-            }, select : {
+                isDeleted : false,
+                ...(normalizedSearch && {
+                    OR : [
+                        { title : { contains : normalizedSearch, mode : "insensitive" } },
+                        { excerpt : { contains : normalizedSearch, mode : "insensitive" } }
+                    ]
+                })
+        }
+
+        const orderBy : Prisma.BlogOrderByWithRelationInput[] = [
+            { [safeSortBy] : order } as Prisma.BlogOrderByWithRelationInput,
+            { id : order }
+        ]
+
+        const blogPosts = await prisma.blog.findMany({
+            where,
+            orderBy,
+            take : limit + 1,
+            ...(cursor && {
+                cursor : {id : Number(cursor)},
+                skip : 1
+            }),
+            select : {
                     id : true,
                     title : true,
                     excerpt : true,
@@ -101,7 +128,14 @@ export const publicBlogService = {
             }
         })
 
-        return publicBlogPostListSchema.parse(blogPosts);
+        const { data, meta } = cursorPaginate(blogPosts, limit, (blog) => blog.id);
+
+        log.info(
+            { userId: user.id, hasSearch: Boolean(search), sortBy: safeSortBy, order, limit, cursor, returned: data.length, hasNextPage: meta.hasNextPage },
+            "Public blogs by user fetched successfully"
+        );
+
+        return { data : publicBlogPostListSchema.parse(data), meta };
     },
 
     getFeedService : async () => {
